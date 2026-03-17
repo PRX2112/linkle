@@ -1,0 +1,147 @@
+"use client";
+
+import { UserProfile } from "@/lib/types";
+import ProfileHeader from "./ProfileHeader";
+import SocialLinks from "./SocialLinks";
+import BusinessSection from "./BusinessSection";
+import LocationSection from "./LocationSection";
+import PaymentSection from "./PaymentSection";
+import ContactSection from "./ContactSection";
+import QRGenerator from "../qr/QRGenerator";
+import ThemeToggle from "../ui/ThemeToggle";
+import { useState } from "react";
+import { QrCode, X, Share2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+
+interface ProfileContainerProps {
+    user: UserProfile;
+}
+
+export default function ProfileContainer({ user }: ProfileContainerProps) {
+    const [showQR, setShowQR] = useState(false);
+    const [showShare, setShowShare] = useState(false);
+    const profileUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${user.username}` : `https://linkle.app/p/${user.username}`;
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `${user.displayName} - Linkle Profile`,
+                    text: user.bio,
+                    url: profileUrl,
+                });
+            } catch (err) {
+                console.log('Share cancelled');
+            }
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(profileUrl);
+            setShowShare(true);
+            setTimeout(() => setShowShare(false), 2000);
+        }
+    };
+
+    return (
+        <div 
+            className="min-h-screen pb-20 bg-background flex flex-col items-center relative"
+            style={{ 
+                '--user-primary': user.theme.primaryColor || '#6366f1' 
+            } as React.CSSProperties}
+        >
+            {/* Animated Background Blobs */}
+            <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/4 -left-20 w-72 h-72 rounded-full blur-3xl animate-float opacity-20" style={{ backgroundColor: 'var(--user-primary)' }}></div>
+                <div className="absolute bottom-1/4 -right-20 w-72 h-72 rounded-full blur-3xl animate-float opacity-20" style={{ animationDelay: '1.5s', backgroundColor: 'var(--user-primary)' }}></div>
+            </div>
+
+            {/* Floating Action Buttons */}
+            <div className="fixed top-4 right-4 z-50 flex gap-2">
+                <ThemeToggle />
+
+                <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={handleShare}
+                    className="p-3 glass dark:glass-dark rounded-full shadow-lg hover:shadow-glow transition-all"
+                >
+                    <Share2 className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                </motion.button>
+
+                <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowQR(true)}
+                    className="p-3 glass dark:glass-dark rounded-full shadow-lg hover:shadow-glow transition-all"
+                >
+                    <QrCode className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                </motion.button>
+            </div>
+
+            {/* Share Notification */}
+            <AnimatePresence>
+                {showShare && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="fixed top-20 right-4 z-50 px-4 py-2 glass dark:glass-dark rounded-full shadow-lg text-sm font-medium"
+                    >
+                        Link copied to clipboard!
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* QR Code Modal */}
+            <AnimatePresence>
+                {showQR && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative"
+                        >
+                            <button
+                                onClick={() => setShowQR(false)}
+                                className="absolute -top-12 right-0 p-2 text-white hover:bg-white/20 rounded-full transition"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                            <QRGenerator url={profileUrl} />
+                        </motion.div>
+                        <div className="absolute inset-0 -z-10" onClick={() => setShowQR(false)} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <ProfileHeader
+                displayName={user.displayName}
+                username={user.username}
+                bio={user.bio}
+                avatarUrl={user.avatarUrl}
+                bannerUrl={user.bannerUrl}
+            />
+
+            <ContactSection actions={user.contactActions} theme={user.theme} />
+
+            <SocialLinks links={user.socialLinks} theme={user.theme} />
+
+            <BusinessSection links={user.businessLinks} theme={user.theme} />
+
+            <PaymentSection payments={user.payments} theme={user.theme} />
+
+            <LocationSection location={user.location} theme={user.theme} />
+
+            <div className="mt-12 text-center">
+                <p className="text-sm text-gray-400">
+                    Powered by <span className="font-bold gradient-text">Linkle</span>
+                </p>
+            </div>
+        </div>
+    );
+}
