@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import Google from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
@@ -8,6 +9,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      profile(profile) {
+        // Map the default Google profile attributes to our schema
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          // Generate a safe username fallback based on email prefix, which can be modified later in setup flow
+          username: profile.email ? profile.email.split("@")[0].toLowerCase().replace(/[^a-z0-9_-]/g, "") : null,
+        }
+      }
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {

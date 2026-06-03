@@ -142,6 +142,10 @@ export default function SocialLinks({ links, theme }: SocialLinksProps) {
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
+                            data-track-id={link.id}
+                            data-track-type="social"
+                            data-track-title={link.platform}
+                            data-track-url={link.url}
                             className={`
                                 w-14 h-14
                                 flex items-center justify-center

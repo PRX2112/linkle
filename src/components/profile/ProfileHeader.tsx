@@ -8,7 +8,7 @@ interface ProfileHeaderProps {
     displayName: string;
     username: string;
     bio: string;
-    avatarUrl: string;
+    avatarUrl: string | null;
     bannerUrl?: string;
 }
 
@@ -42,7 +42,20 @@ export default function ProfileHeader({
             >
                 <div className="rounded-full p-1 bg-gradient-to-br from-purple-500 to-pink-500 shadow-glow">
                     <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-background shadow-lg">
-                        <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex items-center justify-center w-full h-full bg-gray-200 text-gray-600 font-bold text-2xl uppercase">
+                            {(() => {
+                              const parts = displayName.trim().split(/\s+/);
+                              if (parts.length === 1) {
+                                return parts[0][0].toUpperCase();
+                              }
+                              return (parts[0][0] + parts[1][0]).toUpperCase();
+                            })()}
+                          </div>
+                        )}
+
                     </div>
                 </div>
             </motion.div>

@@ -34,6 +34,10 @@ export default function BusinessSection({ links, theme }: BusinessSectionProps) 
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    data-track-id={link.id}
+                    data-track-type="business"
+                    data-track-title={link.title}
+                    data-track-url={link.url}
                 >
                     <div 
                         className={`bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 ${buttonRadiusClass} p-4 flex items-center gap-4 transition-all shadow-sm cursor-pointer group hover:shadow-lg`}

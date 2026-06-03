@@ -19,6 +19,7 @@ export interface SocialLink {
     url: string;
     label?: string; // e.g., "My Portfolio"
     isVisible: boolean;
+    featured?: boolean;
 }
 
 export interface BusinessLink {
@@ -28,6 +29,7 @@ export interface BusinessLink {
     description?: string;
     thumbnailUrl?: string;
     isVisible: boolean;
+    featured?: boolean;
 }
 
 export interface LocationInfo {
@@ -53,6 +55,7 @@ export interface PaymentOption {
     value: string; // UPI ID, Payment Link, or Wallet Address
     qrCodeUrl?: string; // Optional custom QR for this payment
     isVisible: boolean;
+    featured?: boolean;
 }
 
 export interface ContactAction {
@@ -61,6 +64,7 @@ export interface ContactAction {
     label: string;
     url?: string; // For external booking/download
     isVisible: boolean;
+    featured?: boolean;
 }
 
 export interface UserTheme {
@@ -75,7 +79,7 @@ export interface UserProfile {
     username: string;
     displayName: string;
     bio: string;
-    avatarUrl: string;
+    avatarUrl: string | null;
     bannerUrl?: string;
     theme: UserTheme;
     socialLinks: SocialLink[];
@@ -83,4 +87,7 @@ export interface UserProfile {
     location?: LocationInfo;
     payments: PaymentOption[];
     contactActions: ContactAction[];
+    emailCaptureEnabled?: boolean;
+    emailCaptureTitle?: string;
+    emailCapturePlaceholder?: string;
 }

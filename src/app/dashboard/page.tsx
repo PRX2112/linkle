@@ -14,10 +14,28 @@ export default async function DashboardPage() {
       businessLinks: { orderBy: { order: "asc" } },
       paymentLinks: { orderBy: { order: "asc" } },
       contactActions: { orderBy: { order: "asc" } },
+      capturedEmails: { orderBy: { createdAt: "desc" } },
     },
   });
 
   if (!user) redirect("/login");
 
-  return <LinksManager user={user} />;
+  // Fetch real click event counts grouped by linkId
+  const clickCounts = await prisma.clickEvent.groupBy({
+    by: ["linkId"],
+    where: { userId: session.user.id },
+    _count: { id: true },
+  });
+
+  const clicksMap = clickCounts.reduce((acc, curr) => {
+    acc[curr.linkId] = curr._count.id;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const userWithClicks = {
+    ...user,
+    clicksMap,
+  };
+
+  return <LinksManager user={userWithClicks as any} />;
 }

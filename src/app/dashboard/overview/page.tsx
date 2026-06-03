@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+
 import { redirect } from "next/navigation";
 import { LayoutDashboard, Link as LinkIcon, MousePointerClick, TrendingUp, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -16,6 +17,10 @@ export default async function DashboardOverviewPage() {
       paymentLinks: true,
     },
   });
+
+  // Fetch analytics counts
+  const totalClicks = await prisma.clickEvent.count({ where: { userId: session.user.id } });
+  const totalViews = await prisma.profileView.count({ where: { userId: session.user.id } });
 
   if (!user) redirect("/login");
 
@@ -34,8 +39,8 @@ export default async function DashboardOverviewPage() {
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
           { label: "Total Links", value: totalLinks, icon: LinkIcon, color: "from-indigo-500 to-purple-600" },
-          { label: "Mock Clicks", value: "1,248", icon: MousePointerClick, color: "from-rose-500 to-pink-600" },
-          { label: "Profile Views", value: "3,912", icon: TrendingUp, color: "from-emerald-400 to-teal-500" },
+          { label: "Total Clicks", value: totalClicks.toLocaleString(), icon: MousePointerClick, color: "from-rose-500 to-pink-600" },
+          { label: "Profile Views", value: totalViews.toLocaleString(), icon: TrendingUp, color: "from-emerald-400 to-teal-500" },
         ].map((s) => (
           <div key={s.label} className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-[0_8px_20px_rgba(0,0,0,0.04)] p-5">
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center text-white mb-3`}>

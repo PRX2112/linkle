@@ -40,6 +40,10 @@ export default function ContactSection({ actions, theme }: ContactSectionProps) 
                         key={action.id}
                         href={action.url || "#"}
                         target="_blank"
+                        data-track-id={action.id}
+                        data-track-type="contact"
+                        data-track-title={action.label}
+                        data-track-url={action.url || "#"}
                         className="w-full block"
                     >
                         <motion.button

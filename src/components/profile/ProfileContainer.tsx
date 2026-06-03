@@ -7,9 +7,10 @@ import BusinessSection from "./BusinessSection";
 import LocationSection from "./LocationSection";
 import PaymentSection from "./PaymentSection";
 import ContactSection from "./ContactSection";
+import EmailCaptureSection from "./EmailCaptureSection";
 import QRGenerator from "../qr/QRGenerator";
 import ThemeToggle from "../ui/ThemeToggle";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QrCode, X, Share2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -21,6 +22,26 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
     const [showQR, setShowQR] = useState(false);
     const [showShare, setShowShare] = useState(false);
     const profileUrl = typeof window !== 'undefined' ? `${window.location.origin}/p/${user.username}` : `https://linkle.app/p/${user.username}`;
+
+    useEffect(() => {
+        if (typeof window === "undefined" || window.location.pathname.startsWith("/dashboard")) return;
+        
+        let visitorId = localStorage.getItem("linkle_visitor_id");
+        if (!visitorId) {
+            visitorId = "vis_" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem("linkle_visitor_id", visitorId);
+        }
+        
+        fetch("/api/analytics/view", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: user.username,
+                referrer: document.referrer || "Direct",
+                visitorId,
+            }),
+        }).catch((err) => console.error("Error logging view:", err));
+    }, [user.username]);
 
     const handleShare = async () => {
         if (navigator.share) {
@@ -41,8 +62,39 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
         }
     };
 
+    const handleContainerClick = async (e: React.MouseEvent<HTMLDivElement>) => {
+        const target = (e.target as HTMLElement).closest('[data-track-id]');
+        if (!target) return;
+        
+        const linkId = target.getAttribute('data-track-id');
+        const linkType = target.getAttribute('data-track-type');
+        const linkTitle = target.getAttribute('data-track-title') || '';
+        const url = target.getAttribute('data-track-url') || '';
+        
+        if (linkId && linkType) {
+            try {
+                await fetch('/api/analytics/click', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user.id,
+                        linkId,
+                        linkType,
+                        linkTitle,
+                        url,
+                        referrer: document.referrer || "Direct"
+                    }),
+                    keepalive: true
+                });
+            } catch (err) {
+                console.error('Failed to track click:', err);
+            }
+        }
+    };
+
     return (
         <div 
+            onClick={handleContainerClick}
             className="min-h-screen pb-20 bg-background flex flex-col items-center relative"
             style={{ 
                 '--user-primary': user.theme.primaryColor || '#6366f1' 
@@ -112,6 +164,21 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
                             >
                                 <X className="w-6 h-6" />
                             </button>
+                            {user.avatarUrl ? (
+                                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-purple-500/40 shrink-0">
+                                    <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                </div>
+                            ) : (
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center bg-gray-200 text-gray-600 font-bold text-2xl uppercase border-2 border-purple-500/40 shrink-0">
+                                    {(() => {
+                                        const parts = user.displayName.trim().split(/\s+/);
+                                        if (parts.length === 1) {
+                                            return parts[0][0].toUpperCase();
+                                        }
+                                        return (parts[0][0] + parts[1][0]).toUpperCase();
+                                    })()}
+                                </div>
+                            )}
                             <QRGenerator url={profileUrl} />
                         </motion.div>
                         <div className="absolute inset-0 -z-10" onClick={() => setShowQR(false)} />
@@ -134,6 +201,14 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
             <BusinessSection links={user.businessLinks} theme={user.theme} />
 
             <PaymentSection payments={user.payments} theme={user.theme} />
+
+            <EmailCaptureSection
+                username={user.username}
+                enabled={user.emailCaptureEnabled || false}
+                title={user.emailCaptureTitle || "Subscribe to my newsletter"}
+                placeholder={user.emailCapturePlaceholder || "Enter your email"}
+                theme={user.theme}
+            />
 
             <LocationSection location={user.location} theme={user.theme} />
 

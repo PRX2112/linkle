@@ -44,6 +44,10 @@ export default function PaymentSection({ payments, theme }: PaymentSectionProps)
                         <div key={payment.id} className="relative">
                             <button
                                 onClick={() => setExpandedId(isExpanded ? null : payment.id)}
+                                data-track-id={payment.id}
+                                data-track-type="payment"
+                                data-track-title={payment.platform}
+                                data-track-url={payment.value}
                                 className={`w-full flex flex-col items-center justify-center gap-2 p-4 ${buttonRadiusClass} border transition-all ${isExpanded
                                         ? "bg-blue-50 dark:bg-blue-900/20"
                                         : "bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"

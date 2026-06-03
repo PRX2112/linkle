@@ -24,17 +24,58 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
         openGraph: { images: user.avatarUrl ? [user.avatarUrl] : [] },
     };
 }
-
 export default async function ProfilePage(props: Props) {
     const { username } = await props.params;
+
+    const now = new Date();
+    const dateScheduleFilter = {
+        AND: [
+            {
+                OR: [
+                    { startDate: null },
+                    { startDate: { lte: now } }
+                ]
+            },
+            {
+                OR: [
+                    { endDate: null },
+                    { endDate: { gte: now } }
+                ]
+            }
+        ]
+    };
 
     const dbUser = await prisma.user.findUnique({
         where: { username },
         include: {
-            socialLinks: { where: { isVisible: true }, orderBy: { order: 'asc' } },
-            businessLinks: { where: { isVisible: true }, orderBy: { order: 'asc' } },
-            paymentLinks: { where: { isVisible: true }, orderBy: { order: 'asc' } },
-            contactActions: { where: { isVisible: true }, orderBy: { order: 'asc' } },
+            socialLinks: { 
+                where: { 
+                    isVisible: true,
+                    ...dateScheduleFilter
+                }, 
+                orderBy: { order: 'asc' } 
+            },
+            businessLinks: { 
+                where: { 
+                    isVisible: true,
+                    ...dateScheduleFilter
+                }, 
+                orderBy: { order: 'asc' } 
+            },
+            paymentLinks: { 
+                where: { 
+                    isVisible: true,
+                    ...dateScheduleFilter
+                }, 
+                orderBy: { order: 'asc' } 
+            },
+            contactActions: { 
+                where: { 
+                    isVisible: true,
+                    ...dateScheduleFilter
+                }, 
+                orderBy: { order: 'asc' } 
+            },
         },
     });
 
@@ -48,8 +89,11 @@ export default async function ProfilePage(props: Props) {
         username: dbUser.username!,
         displayName: dbUser.displayName ?? dbUser.name ?? dbUser.username ?? '',
         bio: dbUser.bio ?? '',
-        avatarUrl: dbUser.avatarUrl ?? dbUser.image ?? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop',
+        avatarUrl: dbUser.avatarUrl ?? dbUser.image ?? null,
         bannerUrl: dbUser.bannerUrl ?? undefined,
+        emailCaptureEnabled: dbUser.emailCaptureEnabled,
+        emailCaptureTitle: dbUser.emailCaptureTitle,
+        emailCapturePlaceholder: dbUser.emailCapturePlaceholder,
         theme: {
             primaryColor: dbUser.themePrimaryColor,
             backgroundColor: dbUser.themeBackgroundColor,

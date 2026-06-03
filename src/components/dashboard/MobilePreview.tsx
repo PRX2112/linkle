@@ -8,6 +8,7 @@ import ProfileHeader from "../profile/ProfileHeader";
 import SocialLinks from "../profile/SocialLinks";
 import BusinessSection from "../profile/BusinessSection";
 import PaymentSection from "../profile/PaymentSection";
+import EmailCaptureSection from "../profile/EmailCaptureSection";
 
 import { usePreview } from "./PreviewContext";
 
@@ -115,6 +116,15 @@ export default function MobilePreview() {
                 <BusinessSection links={user.businessLinks} theme={theme} />
 
                 <PaymentSection payments={user.payments} theme={theme} />
+
+                <EmailCaptureSection
+                    username={user.username}
+                    enabled={user.emailCaptureEnabled || false}
+                    title={user.emailCaptureTitle || "Subscribe to my newsletter"}
+                    placeholder={user.emailCapturePlaceholder || "Enter your email"}
+                    theme={theme}
+                    isPreview={true}
+                />
                 
                 {(!user.businessLinks?.length && !user.socialLinks?.length && !user.payments?.length) && (
                     <div className="mt-8 px-6 w-full">

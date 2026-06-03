@@ -17,7 +17,6 @@ const navItems = [
   { label: "My Links", href: "/dashboard", icon: LinkIcon },
   { label: "Appearance", href: "/dashboard/appearance", icon: Palette },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { label: "Monetization", href: "/dashboard/monetization", icon: CircleDollarSign },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -33,9 +32,19 @@ export default function DashboardSidebar({ user }: { user: User }) {
 
       {/* User info */}
       <div className="mb-6 px-2 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800">
-        <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center text-white font-bold text-lg mb-2">
-          {user.name?.[0]?.toUpperCase() ?? "?"}
-        </div>
+          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500/40 flex items-center justify-center bg-gray-200 text-gray-600 font-bold text-lg mb-2">
+            {user.image ? (
+              <img src={user.image} alt="User avatar" className="w-full h-full object-cover" />
+            ) : (
+              (() => {
+                const parts = (user.name ?? user.username ?? "?").trim().split(/\s+/);
+                if (parts.length === 1) {
+                  return parts[0][0].toUpperCase();
+                }
+                return (parts[0][0] + parts[1][0]).toUpperCase();
+              })()
+            )}
+          </div>
         <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.name}</div>
         {user.username && (
           <div className="text-xs text-gray-400 truncate">@{user.username}</div>

@@ -21,6 +21,7 @@ export async function PATCH(req: NextRequest) {
     displayName, bio, avatarUrl, bannerUrl,
     themePrimaryColor, themeButtonStyle,
     locationAddress, locationGoogleMapsEmbedUrl, locationIsVisible,
+    emailCaptureEnabled, emailCaptureTitle, emailCapturePlaceholder,
   } = body;
 
   const user = await prisma.user.update({
@@ -29,6 +30,9 @@ export async function PATCH(req: NextRequest) {
       displayName, bio, avatarUrl, bannerUrl,
       themePrimaryColor, themeButtonStyle,
       locationAddress, locationGoogleMapsEmbedUrl, locationIsVisible,
+      emailCaptureEnabled: emailCaptureEnabled !== undefined ? emailCaptureEnabled : undefined,
+      emailCaptureTitle: emailCaptureTitle !== undefined ? emailCaptureTitle : undefined,
+      emailCapturePlaceholder: emailCapturePlaceholder !== undefined ? emailCapturePlaceholder : undefined,
     },
   });
 

@@ -28,7 +28,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <PreviewProvider initialUser={user}>
       <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex">
-      <DashboardSidebar user={session.user} />
+        <DashboardSidebar user={user} />
       <div className="flex-1 flex flex-col lg:flex-row min-h-screen relative">
         <main className="flex-1 p-6 md:p-10 pb-24">
           {children}

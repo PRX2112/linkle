@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { usePreview } from "./PreviewContext";
-import { Plus, Globe, Instagram, Twitter, Linkedin, Youtube, Github, Mail, Phone, MessageCircle, BarChart3, GripVertical, QrCode, Star } from "lucide-react";
+import { Plus, Globe, Instagram, Twitter, Linkedin, Youtube, Github, Mail, Phone, MessageCircle, BarChart3, GripVertical, QrCode, Star, Wallet, CreditCard, Smartphone, Bitcoin, DollarSign } from "lucide-react";
 import QRCodeModal from "./QRCodeModal";
+import LinkEditModal from "./LinkEditModal";
+import StyledSelect from "./StyledSelect";
 import {
   DndContext,
   closestCenter,
@@ -38,9 +40,9 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
   );
 }
 
-interface SocialLink { id: string; platform: string; url: string; label?: string | null; isVisible: boolean; order: number; userId: string; }
-interface BusinessLink { id: string; title: string; url: string; description?: string | null; thumbnailUrl?: string | null; isVisible: boolean; order: number; userId: string; }
-interface PaymentLink { id: string; platform: string; value: string; isVisible: boolean; order: number; userId: string; }
+interface SocialLink { id: string; platform: string; url: string; label?: string | null; isVisible: boolean; order: number; userId: string; featured?: boolean; startDate?: Date | string | null; endDate?: Date | string | null; }
+interface BusinessLink { id: string; title: string; url: string; description?: string | null; thumbnailUrl?: string | null; isVisible: boolean; order: number; userId: string; featured?: boolean; startDate?: Date | string | null; endDate?: Date | string | null; }
+interface PaymentLink { id: string; platform: string; value: string; isVisible: boolean; order: number; userId: string; featured?: boolean; startDate?: Date | string | null; endDate?: Date | string | null; }
 
 interface UserWithLinks {
   id: string;
@@ -49,6 +51,11 @@ interface UserWithLinks {
   businessLinks: BusinessLink[];
   paymentLinks: PaymentLink[];
   contactActions: { id: string; type: string; label: string; url: string; isVisible: boolean; }[];
+  emailCaptureEnabled?: boolean;
+  emailCaptureTitle?: string;
+  emailCapturePlaceholder?: string;
+  capturedEmails?: { id: string; email: string; createdAt: Date | string; }[];
+  clicksMap?: Record<string, number>;
 }
 
 const platformIcons: Record<string, React.ReactNode> = {
@@ -63,17 +70,40 @@ const platformIcons: Record<string, React.ReactNode> = {
   website: <Globe className="w-4 h-4" />,
 };
 
+const platformBaseUrls: Record<string, { prefix: string; placeholder: string }> = {
+  instagram: { prefix: "https://instagram.com/", placeholder: "username" },
+  twitter: { prefix: "https://x.com/", placeholder: "username" },
+  linkedin: { prefix: "https://linkedin.com/in/", placeholder: "username" },
+  youtube: { prefix: "https://youtube.com/@", placeholder: "channel" },
+  github: { prefix: "https://github.com/", placeholder: "username" },
+  email: { prefix: "mailto:", placeholder: "you@example.com" },
+  phone: { prefix: "tel:", placeholder: "+1234567890" },
+  whatsapp: { prefix: "https://wa.me/", placeholder: "1234567890" },
+  website: { prefix: "https://", placeholder: "yoursite.com" },
+};
+
+const paymentBaseUrls: Record<string, { prefix: string; placeholder: string }> = {
+  upi: { prefix: "", placeholder: "username@bank (UPI ID)" },
+  paypal: { prefix: "https://paypal.me/", placeholder: "username" },
+  stripe: { prefix: "https://buy.stripe.com/", placeholder: "payment-link-id" },
+  paytm: { prefix: "", placeholder: "UPI ID or Phone Number" },
+  phonepe: { prefix: "", placeholder: "UPI ID or Phone Number" },
+  googlepay: { prefix: "", placeholder: "UPI ID" },
+  crypto: { prefix: "", placeholder: "Wallet Address" },
+};
+
 export default function LinksManager({ user }: { user: UserWithLinks }) {
   const [activeTab, setActiveTab] = useState<"social" | "business" | "payments" | "contact" | "tools">("social");
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [showQR, setShowQR] = useState(false);
   const [featuredIds, setFeaturedIds] = useState<Set<string>>(new Set());
+  const [editingItem, setEditingItem] = useState<{ type: "social" | "business" | "payment"; data: any } | null>(null);
   const { updatePreviewUser } = usePreview();
 
   // Social Links state
   const [socialLinks, setSocialLinks] = useState(user.socialLinks);
-  const [newSocial, setNewSocial] = useState({ platform: "instagram", url: "", label: "" });
+  const [newSocial, setNewSocial] = useState({ platform: "instagram", handle: "", label: "" });
 
   // Business Links state
   const [businessLinks, setBusinessLinks] = useState(user.businessLinks);
@@ -81,7 +111,41 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
 
   // Payment Links state
   const [paymentLinks, setPaymentLinks] = useState(user.paymentLinks);
-  const [newPayment, setNewPayment] = useState({ platform: "upi", value: "" });
+  const [newPayment, setNewPayment] = useState({ platform: "upi", handle: "" });
+
+  const [emailCapture, setEmailCapture] = useState({
+    enabled: user.emailCaptureEnabled || false,
+    title: user.emailCaptureTitle || "Subscribe to my newsletter",
+    placeholder: user.emailCapturePlaceholder || "Enter your email",
+    saved: true,
+  });
+
+  const [capturedEmails, setCapturedEmails] = useState(user.capturedEmails || []);
+
+  const handleSaveEmailCapture = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emailCaptureEnabled: emailCapture.enabled,
+          emailCaptureTitle: emailCapture.title,
+          emailCapturePlaceholder: emailCapture.placeholder,
+        }),
+      });
+      if (res.ok) {
+        setEmailCapture(prev => ({ ...prev, saved: true }));
+        showSuccess("Email capture settings saved!");
+      } else {
+        showSuccess("Failed to save email capture settings.");
+      }
+    } catch {
+      showSuccess("Error saving email capture settings.");
+    }
+    setSaving(false);
+  };
+
 
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg);
@@ -149,22 +213,27 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
     updatePreviewUser({ 
       socialLinks: socialLinks as any, 
       businessLinks: businessLinks as any, 
-      payments: paymentLinks as any 
+      payments: paymentLinks as any,
+      emailCaptureEnabled: emailCapture.enabled,
+      emailCaptureTitle: emailCapture.title,
+      emailCapturePlaceholder: emailCapture.placeholder
     });
-  }, [socialLinks, businessLinks, paymentLinks, updatePreviewUser]);
+  }, [socialLinks, businessLinks, paymentLinks, emailCapture, updatePreviewUser]);
 
   const handleSaveSocial = async () => {
-    if (!newSocial.url) return;
+    if (!newSocial.handle) return;
     setSaving(true);
+    const base = platformBaseUrls[newSocial.platform];
+    const fullUrl = base ? base.prefix + newSocial.handle : newSocial.handle;
     const res = await fetch("/api/links/social", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newSocial),
+      body: JSON.stringify({ platform: newSocial.platform, url: fullUrl, label: newSocial.label }),
     });
     if (res.ok) {
       const data = await res.json();
       setSocialLinks((prev) => [...prev, data]);
-      setNewSocial({ platform: "instagram", url: "", label: "" });
+      setNewSocial({ platform: "instagram", handle: "", label: "" });
       showSuccess("Social link added!");
     }
     setSaving(false);
@@ -198,17 +267,19 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
   };
 
   const handleSavePayment = async () => {
-    if (!newPayment.value) return;
+    if (!newPayment.handle) return;
     setSaving(true);
+    const base = paymentBaseUrls[newPayment.platform];
+    const fullValue = base ? base.prefix + newPayment.handle : newPayment.handle;
     const res = await fetch("/api/links/payment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newPayment),
+      body: JSON.stringify({ platform: newPayment.platform, value: fullValue }),
     });
     if (res.ok) {
       const data = await res.json();
       setPaymentLinks((prev) => [...prev, data]);
-      setNewPayment({ platform: "upi", value: "" });
+      setNewPayment({ platform: "upi", handle: "" });
       showSuccess("Payment link added!");
     }
     setSaving(false);
@@ -219,7 +290,22 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
     setPaymentLinks((prev) => prev.filter((l) => l.id !== id));
   };
 
-  const [emailCapture, setEmailCapture] = useState({ enabled: false, title: "Subscribe to my newsletter", placeholder: "Enter your email", saved: false });
+  const handleSaveEditedLink = (updatedLink: any) => {
+    if (!editingItem) return;
+    
+    if (editingItem.type === "social") {
+      setSocialLinks((prev) => prev.map((l) => (l.id === updatedLink.id ? updatedLink : l)));
+      showSuccess("Social link updated!");
+    } else if (editingItem.type === "business") {
+      setBusinessLinks((prev) => prev.map((l) => (l.id === updatedLink.id ? updatedLink : l)));
+      showSuccess("Link updated!");
+    } else if (editingItem.type === "payment") {
+      setPaymentLinks((prev) => prev.map((l) => (l.id === updatedLink.id ? updatedLink : l)));
+      showSuccess("Payment method updated!");
+    }
+  };
+
+
 
   const tabs = [
     { id: "social", label: "Social" },
@@ -331,25 +417,28 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                         <div className="flex items-center gap-4 mt-3 flex-wrap">
                           <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
                             <BarChart3 className="w-3.5 h-3.5" />
-                            {Math.floor(Math.random() * 500) + 10} Clicks
+                            {user.clicksMap?.[link.id] || 0} Clicks
                           </div>
                           <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700"></div>
                           <button
-                            onClick={() => {
-                              setFeaturedIds(prev => {
-                                const next = new Set(prev);
-                                next.has(link.id) ? next.delete(link.id) : next.add(link.id);
-                                return next;
+                            onClick={async () => {
+                              const updatedFeatured = !link.featured;
+                              const updated = socialLinks.map(l => l.id === link.id ? { ...l, featured: updatedFeatured } : l);
+                              setSocialLinks(updated);
+                              await fetch(`/api/links/social/${link.id}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ featured: updatedFeatured })
                               });
                             }}
-                            className={`text-xs font-medium flex items-center gap-1 transition-colors ${featuredIds.has(link.id) ? "text-amber-500" : "text-gray-400 hover:text-amber-500"}`}
+                            className={`text-xs font-medium flex items-center gap-1 transition-colors ${link.featured ? "text-amber-500" : "text-gray-400 hover:text-amber-500"}`}
                             title="Pin as Featured"
                           >
-                            <Star className={`w-3.5 h-3.5 ${featuredIds.has(link.id) ? "fill-amber-500" : ""}`} />
-                            {featuredIds.has(link.id) ? "Featured" : "Feature"}
+                            <Star className={`w-3.5 h-3.5 ${link.featured ? "fill-amber-500 text-amber-500" : ""}`} />
+                            {link.featured ? "Featured" : "Feature"}
                           </button>
                           <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700"></div>
-                          <button className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">Edit</button>
+                          <button onClick={() => setEditingItem({ type: "social", data: link })} className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">Edit</button>
                           <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700"></div>
                           <button onClick={() => handleDeleteSocial(link.id)} className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors">Delete</button>
                         </div>
@@ -385,17 +474,34 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
               Add Social Link
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <select value={newSocial.platform} onChange={(e) => setNewSocial((p) => ({ ...p, platform: e.target.value }))}
-                className="px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/40">
-                {["instagram","twitter","linkedin","youtube","github","email","phone","whatsapp","website"].map((p) => (
-                   <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
-                ))}
-              </select>
-              <input value={newSocial.url} onChange={(e) => setNewSocial((p) => ({ ...p, url: e.target.value }))}
-                placeholder="URL or handle"
-                className="px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40" />
+              <StyledSelect
+                value={newSocial.platform}
+                onChange={(val) => setNewSocial((p) => ({ ...p, platform: val, handle: "" }))}
+                options={[
+                  { value: "instagram", label: "Instagram", icon: <Instagram className="w-4 h-4" />, color: "bg-gradient-to-br from-pink-500 to-orange-400" },
+                  { value: "twitter", label: "Twitter", icon: <Twitter className="w-4 h-4" />, color: "bg-gradient-to-br from-sky-400 to-blue-500" },
+                  { value: "linkedin", label: "LinkedIn", icon: <Linkedin className="w-4 h-4" />, color: "bg-gradient-to-br from-blue-600 to-blue-800" },
+                  { value: "youtube", label: "YouTube", icon: <Youtube className="w-4 h-4" />, color: "bg-gradient-to-br from-red-500 to-red-700" },
+                  { value: "github", label: "GitHub", icon: <Github className="w-4 h-4" />, color: "bg-gradient-to-br from-gray-700 to-gray-900" },
+                  { value: "email", label: "Email", icon: <Mail className="w-4 h-4" />, color: "bg-gradient-to-br from-emerald-400 to-teal-600" },
+                  { value: "phone", label: "Phone", icon: <Phone className="w-4 h-4" />, color: "bg-gradient-to-br from-green-500 to-green-700" },
+                  { value: "whatsapp", label: "WhatsApp", icon: <MessageCircle className="w-4 h-4" />, color: "bg-gradient-to-br from-green-400 to-emerald-600" },
+                  { value: "website", label: "Website", icon: <Globe className="w-4 h-4" />, color: "bg-gradient-to-br from-indigo-500 to-purple-600" },
+                ]}
+              />
+              <div className="flex items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500/40 focus-within:border-purple-400 dark:focus-within:border-purple-500 transition-all">
+                <span className="flex items-center px-3 bg-gray-100 dark:bg-zinc-700 border-r border-gray-200 dark:border-zinc-600 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap select-none">
+                  {platformBaseUrls[newSocial.platform]?.prefix}
+                </span>
+                <input
+                  value={newSocial.handle}
+                  onChange={(e) => setNewSocial((p) => ({ ...p, handle: e.target.value }))}
+                  placeholder={platformBaseUrls[newSocial.platform]?.placeholder || "handle"}
+                  className="flex-1 px-3 py-3 bg-transparent text-sm text-foreground placeholder-gray-400 focus:outline-none min-w-0"
+                />
+              </div>
             </div>
-            <button onClick={handleSaveSocial} disabled={saving || !newSocial.url}
+            <button onClick={handleSaveSocial} disabled={saving || !newSocial.handle}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl gradient-bg text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition-all shadow-glow">
               Add To Profile
             </button>
@@ -423,10 +529,10 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                       <div className="flex items-center gap-4 mt-4">
                         <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
                           <BarChart3 className="w-3.5 h-3.5" />
-                          {Math.floor(Math.random() * 800) + 100} Clicks
+                          {user.clicksMap?.[link.id] || 0} Clicks
                         </div>
                         <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700"></div>
-                        <button className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">Edit</button>
+                        <button onClick={() => setEditingItem({ type: "business", data: link })} className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">Edit</button>
                         <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700"></div>
                         <button onClick={() => handleDeleteBusiness(link.id)} className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors">Delete</button>
                       </div>
@@ -498,10 +604,10 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                       <div className="flex items-center gap-4 mt-4">
                         <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
                           <BarChart3 className="w-3.5 h-3.5" />
-                          {Math.floor(Math.random() * 50) + 5} Clicks
+                          {user.clicksMap?.[link.id] || 0} Clicks
                         </div>
                         <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700"></div>
-                        <button className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">Edit</button>
+                        <button onClick={() => setEditingItem({ type: "payment", data: link })} className="text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">Edit</button>
                         <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-zinc-700"></div>
                         <button onClick={() => handleDeletePayment(link.id)} className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors">Delete</button>
                       </div>
@@ -536,17 +642,34 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
               Add Payment Method
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <select value={newPayment.platform} onChange={(e) => setNewPayment((p) => ({ ...p, platform: e.target.value }))}
-                className="px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/40">
-                {["upi","paypal","stripe","paytm","phonepe","googlepay","crypto"].map((p) => (
-                  <option key={p} value={p}>{p.toUpperCase()}</option>
-                ))}
-              </select>
-              <input value={newPayment.value} onChange={(e) => setNewPayment((p) => ({ ...p, value: e.target.value }))}
-                placeholder="UPI ID / payment link"
-                className="px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40" />
+              <StyledSelect
+                value={newPayment.platform}
+                onChange={(val) => setNewPayment((p) => ({ ...p, platform: val, handle: "" }))}
+                options={[
+                  { value: "upi", label: "UPI", icon: <Smartphone className="w-4 h-4" />, color: "bg-gradient-to-br from-orange-500 to-orange-700" },
+                  { value: "paypal", label: "PayPal", icon: <DollarSign className="w-4 h-4" />, color: "bg-gradient-to-br from-blue-500 to-blue-700" },
+                  { value: "stripe", label: "Stripe", icon: <CreditCard className="w-4 h-4" />, color: "bg-gradient-to-br from-indigo-500 to-purple-600" },
+                  { value: "paytm", label: "Paytm", icon: <Wallet className="w-4 h-4" />, color: "bg-gradient-to-br from-sky-400 to-cyan-600" },
+                  { value: "phonepe", label: "PhonePe", icon: <Smartphone className="w-4 h-4" />, color: "bg-gradient-to-br from-purple-600 to-indigo-800" },
+                  { value: "googlepay", label: "Google Pay", icon: <Wallet className="w-4 h-4" />, color: "bg-gradient-to-br from-green-400 to-blue-500" },
+                  { value: "crypto", label: "Crypto", icon: <Bitcoin className="w-4 h-4" />, color: "bg-gradient-to-br from-amber-400 to-yellow-600" },
+                ]}
+              />
+              <div className="flex items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500/40 focus-within:border-purple-400 dark:focus-within:border-purple-500 transition-all">
+                {paymentBaseUrls[newPayment.platform]?.prefix && (
+                  <span className="flex items-center px-3 bg-gray-100 dark:bg-zinc-700 border-r border-gray-200 dark:border-zinc-600 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap select-none">
+                    {paymentBaseUrls[newPayment.platform].prefix}
+                  </span>
+                )}
+                <input
+                  value={newPayment.handle}
+                  onChange={(e) => setNewPayment((p) => ({ ...p, handle: e.target.value }))}
+                  placeholder={paymentBaseUrls[newPayment.platform]?.placeholder || "handle"}
+                  className="flex-1 px-3 py-3 bg-transparent text-sm text-foreground placeholder-gray-400 focus:outline-none min-w-0"
+                />
+              </div>
             </div>
-            <button onClick={handleSavePayment} disabled={saving || !newPayment.value}
+            <button onClick={handleSavePayment} disabled={saving || !newPayment.handle}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl gradient-bg text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition-all shadow-glow">
               Add To Profile
             </button>
@@ -570,7 +693,7 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                 </div>
               </div>
               <button
-                onClick={() => setEmailCapture(e => ({ ...e, enabled: !e.enabled }))}
+                onClick={() => setEmailCapture(e => ({ ...e, enabled: !e.enabled, saved: false }))}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${emailCapture.enabled ? 'bg-purple-500' : 'bg-gray-200 dark:bg-zinc-700'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${emailCapture.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -583,7 +706,7 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Block Title</label>
                   <input
                     value={emailCapture.title}
-                    onChange={e => setEmailCapture(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={e => setEmailCapture(prev => ({ ...prev, title: e.target.value, saved: false }))}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   />
                 </div>
@@ -591,7 +714,7 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Input Placeholder</label>
                   <input
                     value={emailCapture.placeholder}
-                    onChange={e => setEmailCapture(prev => ({ ...prev, placeholder: e.target.value }))}
+                    onChange={e => setEmailCapture(prev => ({ ...prev, placeholder: e.target.value, saved: false }))}
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                   />
                 </div>
@@ -607,11 +730,47 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                 </div>
 
                 <button
-                  onClick={() => setEmailCapture(prev => ({ ...prev, saved: true }))}
-                  className="px-6 py-2.5 rounded-xl gradient-bg text-white text-sm font-semibold hover:opacity-90 transition-all shadow-glow"
+                  onClick={handleSaveEmailCapture}
+                  disabled={saving || emailCapture.saved}
+                  className="px-6 py-2.5 rounded-xl gradient-bg text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-glow"
                 >
                   {emailCapture.saved ? "✓ Saved" : "Save Block"}
                 </button>
+
+                {/* Collected Emails List */}
+                <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Collected Emails ({capturedEmails.length})</h4>
+                  {capturedEmails.length === 0 ? (
+                    <p className="text-xs text-gray-400">No emails collected yet.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {capturedEmails.map((item) => (
+                        <div key={item.id} className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-zinc-800/40 rounded-lg text-xs">
+                          <span className="font-medium text-gray-800 dark:text-gray-200">{item.email}</span>
+                          <span className="text-gray-400">{new Date(item.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {capturedEmails.length > 0 && (
+                    <button
+                      onClick={() => {
+                        const csvContent = "data:text/csv;charset=utf-8,Email,Date\n" 
+                          + capturedEmails.map(e => `${e.email},${new Date(e.createdAt).toLocaleDateString()}`).join("\n");
+                        const encodedUri = encodeURI(csvContent);
+                        const link = document.createElement("a");
+                        link.setAttribute("href", encodedUri);
+                        link.setAttribute("download", `${user.username || 'user'}_subscribers.csv`);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      className="mt-3 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                    >
+                      📥 Download CSV List
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -651,6 +810,14 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
             </span>
           </div>
         </section>
+      )}
+
+      {editingItem && (
+        <LinkEditModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSave={handleSaveEditedLink}
+        />
       )}
     </div>
   );
