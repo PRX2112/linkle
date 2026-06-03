@@ -5,9 +5,9 @@ import { BadgeCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ProfileHeaderProps {
-    displayName: string;
+    displayName: string | null;
     username: string;
-    bio: string;
+    bio: string | null;
     avatarUrl: string | null;
     bannerUrl?: string;
 }
@@ -19,6 +19,8 @@ export default function ProfileHeader({
     avatarUrl,
     bannerUrl,
 }: ProfileHeaderProps) {
+    const nameToUse = displayName || username || "User";
+
     return (
         <div className="w-full flex flex-col items-center">
             {/* Banner */}
@@ -43,11 +45,11 @@ export default function ProfileHeader({
                 <div className="rounded-full p-1 bg-gradient-to-br from-purple-500 to-pink-500 shadow-glow">
                     <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-background shadow-lg">
                         {avatarUrl ? (
-                          <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                          <img src={avatarUrl} alt={nameToUse} className="w-full h-full object-cover" />
                         ) : (
                           <div className="flex items-center justify-center w-full h-full bg-gray-200 text-gray-600 font-bold text-2xl uppercase">
                             {(() => {
-                              const parts = displayName.trim().split(/\s+/);
+                              const parts = nameToUse.trim().split(/\s+/);
                               if (parts.length === 1) {
                                 return parts[0][0].toUpperCase();
                               }
@@ -55,7 +57,6 @@ export default function ProfileHeader({
                             })()}
                           </div>
                         )}
-
                     </div>
                 </div>
             </motion.div>
@@ -68,13 +69,15 @@ export default function ProfileHeader({
                 className="text-center px-4 max-w-md"
             >
                 <h1 className="text-3xl font-black flex items-center justify-center gap-2">
-                    {displayName}
+                    {nameToUse}
                     <BadgeCheck className="w-6 h-6 text-blue-500 fill-blue-500" />
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">@{username}</p>
-                <p className="mt-4 text-base text-gray-700 dark:text-gray-300 leading-relaxed">
-                    {bio}
-                </p>
+                {bio && (
+                    <p className="mt-4 text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {bio}
+                    </p>
+                )}
             </motion.div>
         </div>
     );
