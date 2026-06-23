@@ -316,26 +316,26 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
 
   return (
     <div className="max-w-3xl">
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">My Links</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             Manage everything shown on your Linkle page
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
           {user.username && (
             <>
               <a
                 href={`/p/${user.username}`}
                 target="_blank"
-                className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white text-sm font-medium hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all flex items-center gap-2"
+                className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white text-sm font-medium hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all flex items-center gap-2 shrink-0"
               >
                 <Globe className="w-4 h-4" /> Preview
               </a>
               <button
                 onClick={() => setShowQR(true)}
-                className="p-2.5 rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+                className="p-2.5 rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all shrink-0"
                 title="Download QR Code"
               >
                 <QrCode className="w-4 h-4" />
@@ -343,7 +343,7 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
             </>
           )}
           <button 
-            className="px-5 py-2.5 rounded-xl gradient-bg text-white text-sm font-semibold hover:opacity-90 transition-all shadow-glow flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl gradient-bg text-white text-sm font-semibold hover:opacity-90 transition-all shadow-glow flex items-center gap-2 shrink-0"
             onClick={() => {
               document.getElementById('add-link-section')?.scrollIntoView({ behavior: 'smooth' });
             }}
@@ -378,12 +378,12 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-zinc-800 rounded-xl w-fit">
+      <div className="flex gap-1.5 mb-6 p-1 bg-gray-100 dark:bg-zinc-800 rounded-xl overflow-x-auto no-scrollbar max-w-full flex-nowrap shrink-0">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`shrink-0 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
                 ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-sm"
                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
@@ -489,10 +489,12 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                   { value: "website", label: "Website", icon: <Globe className="w-4 h-4" />, color: "bg-gradient-to-br from-indigo-500 to-purple-600" },
                 ]}
               />
-              <div className="flex items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500/40 focus-within:border-purple-400 dark:focus-within:border-purple-500 transition-all">
-                <span className="flex items-center px-3 bg-gray-100 dark:bg-zinc-700 border-r border-gray-200 dark:border-zinc-600 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap select-none">
-                  {platformBaseUrls[newSocial.platform]?.prefix}
-                </span>
+              <div className="flex flex-col sm:flex-row items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500/40 focus-within:border-purple-400 dark:focus-within:border-purple-500 transition-all">
+                {platformBaseUrls[newSocial.platform]?.prefix && (
+                  <span className="flex items-center px-3 py-2 sm:py-0 bg-gray-100 dark:bg-zinc-700 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-zinc-600 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap select-none">
+                    {platformBaseUrls[newSocial.platform].prefix}
+                  </span>
+                )}
                 <input
                   value={newSocial.handle}
                   onChange={(e) => setNewSocial((p) => ({ ...p, handle: e.target.value }))}
@@ -655,9 +657,9 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                   { value: "crypto", label: "Crypto", icon: <Bitcoin className="w-4 h-4" />, color: "bg-gradient-to-br from-amber-400 to-yellow-600" },
                 ]}
               />
-              <div className="flex items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500/40 focus-within:border-purple-400 dark:focus-within:border-purple-500 transition-all">
+              <div className="flex flex-col sm:flex-row items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500/40 focus-within:border-purple-400 dark:focus-within:border-purple-500 transition-all">
                 {paymentBaseUrls[newPayment.platform]?.prefix && (
-                  <span className="flex items-center px-3 bg-gray-100 dark:bg-zinc-700 border-r border-gray-200 dark:border-zinc-600 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap select-none">
+                  <span className="flex items-center px-3 py-2 sm:py-0 bg-gray-100 dark:bg-zinc-700 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-zinc-650 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap select-none">
                     {paymentBaseUrls[newPayment.platform].prefix}
                   </span>
                 )}

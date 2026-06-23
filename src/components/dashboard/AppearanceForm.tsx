@@ -175,7 +175,7 @@ export default function AppearanceForm({ user }: { user: User }) {
   ] as const;
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-3xl mx-auto px-4 md:px-0">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Appearance</h1>
@@ -199,14 +199,14 @@ export default function AppearanceForm({ user }: { user: User }) {
         </div>
       )}
 
-      <div className="flex gap-6">
-        {/* Vertical Tab Navigation */}
-        <nav className="w-44 shrink-0 space-y-1">
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Responsive Tab Navigation */}
+        <nav className="w-full md:w-44 shrink-0 flex md:flex-col gap-1.5 overflow-x-auto no-scrollbar flex-nowrap pb-2 md:pb-0">
           {navItems.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveSection(id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              className={`shrink-0 flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeSection === id
                   ? "gradient-bg text-white shadow-glow"
                   : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
@@ -272,7 +272,7 @@ export default function AppearanceForm({ user }: { user: User }) {
               {/* Theme Presets */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Presets</label>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 xs:grid-cols-4 md:grid-cols-4 gap-3">
                   {THEMES.map((theme) => (
                     <button
                       key={theme.id}

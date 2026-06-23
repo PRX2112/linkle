@@ -52,7 +52,7 @@ export default async function Home() {
                     <span>New: Crypto Payments Supported</span>
                 </div>
 
-                <h1 className="text-6xl md:text-8xl font-black tracking-tighter max-w-4xl mb-6 leading-tight">
+                <h1 className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tighter max-w-4xl mb-6 leading-tight">
                     One Link. <br />
                     <span className="gradient-text">Endless Possibilities.</span>
                 </h1>
@@ -99,7 +99,7 @@ export default async function Home() {
                 </div>
 
                 {/* Stats Section */}
-                <div className="grid grid-cols-3 gap-8 mt-24 max-w-3xl w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mt-16 sm:mt-24 max-w-3xl w-full">
                     <StatCard number="10K+" label="Active Users" />
                     <StatCard number="50K+" label="QR Scans" />
                     <StatCard number="99.9%" label="Uptime" />

@@ -36,7 +36,7 @@ export default async function DashboardOverviewPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           { label: "Total Links", value: totalLinks, icon: LinkIcon, color: "from-indigo-500 to-purple-600" },
           { label: "Total Clicks", value: totalClicks.toLocaleString(), icon: MousePointerClick, color: "from-rose-500 to-pink-600" },

@@ -177,9 +177,9 @@ export default function LinkEditModal({ item, onClose, onSave }: LinkEditModalPr
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Username / Handle</label>
-                <div className="flex items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500/40 transition-all">
+                <div className="flex flex-col sm:flex-row items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500/40 transition-all">
                   {platformBaseUrls[socialForm.platform]?.prefix && (
-                    <span className="flex items-center px-3 bg-gray-100 dark:bg-zinc-800 border-r border-gray-200 dark:border-zinc-700 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap select-none">
+                    <span className="flex items-center px-3 py-2 sm:py-0 bg-gray-100 dark:bg-zinc-800 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-zinc-700 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap select-none">
                       {platformBaseUrls[socialForm.platform].prefix}
                     </span>
                   )}
@@ -259,9 +259,9 @@ export default function LinkEditModal({ item, onClose, onSave }: LinkEditModalPr
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Payment Handle / ID</label>
-                <div className="flex items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500/40 transition-all">
+                <div className="flex flex-col sm:flex-row items-stretch rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 overflow-hidden focus-within:ring-2 focus-within:ring-purple-500/40 transition-all">
                   {paymentBaseUrls[paymentForm.platform]?.prefix && (
-                    <span className="flex items-center px-3 bg-gray-100 dark:bg-zinc-800 border-r border-gray-200 dark:border-zinc-700 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap select-none">
+                    <span className="flex items-center px-3 py-2 sm:py-0 bg-gray-100 dark:bg-zinc-800 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-zinc-700 text-xs font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap select-none">
                       {paymentBaseUrls[paymentForm.platform].prefix}
                     </span>
                   )}
