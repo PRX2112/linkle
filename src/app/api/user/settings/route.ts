@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { UserSettingsSchema } from "@/lib/validation";
+import { revalidateProfile } from "@/lib/cache";
 
 export async function PATCH(req: NextRequest) {
   const session = await auth();
@@ -9,63 +11,54 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
-    const { username, displayName } = await req.json();
+    const body = await req.json();
+    const validation = UserSettingsSchema.safeParse(body);
 
-    // 1. Username uniqueness validation
-    if (username !== undefined) {
-      const trimmedUsername = username.trim().toLowerCase();
-      
-      // Username validation regex: 3-20 chars, alphanumeric, _ or -
-      const usernameRegex = /^[a-z0-9_-]{3,20}$/;
-      if (!usernameRegex.test(trimmedUsername)) {
-        return NextResponse.json(
-          { error: "Username must be 3-20 characters long and contain only lowercase letters, numbers, hyphens (-), or underscores (_)." },
-          { status: 400 }
-        );
-      }
-
-      // Check if username is already taken by another user
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          username: trimmedUsername,
-          NOT: { id: session.user.id }
-        }
-      });
-
-      if (existingUser) {
-        return NextResponse.json(
-          { error: "This username is already taken. Please choose another one." },
-          { status: 400 }
-        );
-      }
-
-      // Update username and display name
-      const updatedUser = await prisma.user.update({
-        where: { id: session.user.id },
-        data: {
-          username: trimmedUsername,
-          displayName: displayName !== undefined ? displayName : undefined
-        }
-      });
-
-      return NextResponse.json(updatedUser);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.issues[0].message },
+        { status: 400 }
+      );
     }
 
-    // If only updating other details
+    const { username, displayName } = validation.data;
+    const trimmedUsername = username.trim().toLowerCase();
+
+    // Check if username is already taken by another user
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        username: trimmedUsername,
+        NOT: { id: session.user.id }
+      }
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "This username is already taken. Please choose another one." },
+        { status: 400 }
+      );
+    }
+
+    const oldUsername = session.user.username;
+
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: {
+        username: trimmedUsername,
         displayName: displayName !== undefined ? displayName : undefined
       }
     });
 
-    return NextResponse.json(updatedUser);
+    revalidateProfile(oldUsername);
+    revalidateProfile(updatedUser.username);
 
+    return NextResponse.json(updatedUser);
   } catch (error) {
     console.error("Failed to update user settings:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
 
 export async function DELETE(req: NextRequest) {
   const session = await auth();
@@ -74,10 +67,14 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
+    const oldUsername = session.user.username;
+
     // Delete the user record (Prisma onDelete Cascade handles cascade deletions of accounts, sessions, links, etc.)
     await prisma.user.delete({
       where: { id: session.user.id }
     });
+
+    revalidateProfile(oldUsername);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -85,3 +82,4 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import ProfileContainer from '@/components/profile/ProfileContainer';
 import { notFound } from 'next/navigation';
 import type { UserProfile, SocialLink, BusinessLink, LocationInfo, PaymentOption, ContactAction, SocialPlatform, PaymentPlatform } from '@/lib/types';
+import { unstable_cache } from 'next/cache';
 
 interface Props {
     params: Promise<{
@@ -24,60 +25,77 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
         openGraph: { images: user.avatarUrl ? [user.avatarUrl] : [] },
     };
 }
+
+// Cached function to load user profiles and active links
+const getCachedProfile = (username: string) => {
+  const normalized = username.toLowerCase().trim();
+  
+  return unstable_cache(
+    async () => {
+      const now = new Date();
+      const dateScheduleFilter = {
+        AND: [
+          {
+            OR: [
+              { startDate: null },
+              { startDate: { lte: now } }
+            ]
+          },
+          {
+            OR: [
+              { endDate: null },
+              { endDate: { gte: now } }
+            ]
+          }
+        ]
+      };
+
+      return prisma.user.findUnique({
+        where: { username: normalized },
+        include: {
+          socialLinks: { 
+            where: { 
+              isVisible: true,
+              ...dateScheduleFilter
+            }, 
+            orderBy: { order: 'asc' } 
+          },
+          businessLinks: { 
+            where: { 
+              isVisible: true,
+              ...dateScheduleFilter
+            }, 
+            orderBy: { order: 'asc' } 
+          },
+          paymentLinks: { 
+            where: { 
+              isVisible: true,
+              ...dateScheduleFilter
+            }, 
+            orderBy: { order: 'asc' } 
+          },
+          contactActions: { 
+            where: { 
+              isVisible: true,
+              ...dateScheduleFilter
+            }, 
+            orderBy: { order: 'asc' } 
+          },
+        },
+      });
+    },
+    [`profile-${normalized}`],
+    {
+      tags: [`user-profile-${normalized}`],
+      revalidate: 3600, // revalidate every 1 hour fallback
+    }
+  )();
+};
+
 export default async function ProfilePage(props: Props) {
     const { username } = await props.params;
 
-    const now = new Date();
-    const dateScheduleFilter = {
-        AND: [
-            {
-                OR: [
-                    { startDate: null },
-                    { startDate: { lte: now } }
-                ]
-            },
-            {
-                OR: [
-                    { endDate: null },
-                    { endDate: { gte: now } }
-                ]
-            }
-        ]
-    };
-
-    const dbUser = await prisma.user.findUnique({
-        where: { username },
-        include: {
-            socialLinks: { 
-                where: { 
-                    isVisible: true,
-                    ...dateScheduleFilter
-                }, 
-                orderBy: { order: 'asc' } 
-            },
-            businessLinks: { 
-                where: { 
-                    isVisible: true,
-                    ...dateScheduleFilter
-                }, 
-                orderBy: { order: 'asc' } 
-            },
-            paymentLinks: { 
-                where: { 
-                    isVisible: true,
-                    ...dateScheduleFilter
-                }, 
-                orderBy: { order: 'asc' } 
-            },
-            contactActions: { 
-                where: { 
-                    isVisible: true,
-                    ...dateScheduleFilter
-                }, 
-                orderBy: { order: 'asc' } 
-            },
-        },
-    });
+    const dbUser = await getCachedProfile(username);
 
     if (!dbUser) {
         notFound();

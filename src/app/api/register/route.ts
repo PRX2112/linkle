@@ -3,14 +3,21 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { UserRegisterSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, username } = await req.json();
+    const body = await req.json();
+    const validation = UserRegisterSchema.safeParse(body);
 
-    if (!name || !email || !password || !username) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.issues[0].message },
+        { status: 400 }
+      );
     }
+
+    const { name, email, password, username } = validation.data;
 
     // Check if email already exists
     const existingEmail = await prisma.user.findUnique({ where: { email } });
@@ -22,14 +29,6 @@ export async function POST(req: NextRequest) {
     const existingUsername = await prisma.user.findUnique({ where: { username } });
     if (existingUsername) {
       return NextResponse.json({ error: "Username already taken" }, { status: 400 });
-    }
-
-    // Validate username format
-    const usernameRegex = /^[a-z0-9_-]{3,20}$/;
-    if (!usernameRegex.test(username)) {
-      return NextResponse.json({
-        error: "Username must be 3-20 characters, lowercase letters, numbers, _ or -"
-      }, { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -50,3 +49,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
+

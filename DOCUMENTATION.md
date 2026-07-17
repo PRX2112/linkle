@@ -31,8 +31,9 @@
 - Payment collection methods (UPI, PayPal, Stripe, Crypto, etc.)
 - Physical location with an embedded Google Maps widget
 - Contact actions (vCard, appointment booking, resume download)
+- Email capture / newsletter subscription widget
 
-Users manage everything from a polished dashboard that features a live **mobile/desktop preview panel**, drag-and-drop reordering, per-link visibility toggles, and deep appearance customisation.
+Users manage everything from a polished dashboard that features a live **mobile/desktop preview panel**, drag-and-drop reordering, per-link visibility toggles, in-place link editing, and deep appearance customisation.
 
 ---
 
@@ -47,8 +48,9 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | Forgot password (token generated, logged to console) | ✅ Done |
 | Reset password (token-validated, bcrypt re-hash) | ✅ Done |
 | Protected dashboard routes (server-side redirect) | ✅ Done |
+| Account deletion (with typed confirmation) | ✅ Done |
 | OAuth providers (Google, GitHub, etc.) | 🔲 Planned |
-| Email delivery for password reset | 🔲 Planned |
+| Email delivery for password reset | 🔲 Planned (nodemailer installed) |
 
 ### 2.2 Public Profile Page (`/p/:username`)
 | Feature | Status |
@@ -59,6 +61,9 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | Payment methods section (UPI, PayPal, Stripe, Crypto…) | ✅ Done |
 | Location section with embedded Google Maps | ✅ Done |
 | Contact actions section | ✅ Done |
+| Email capture / newsletter subscribe widget | ✅ Done |
+| Scheduled link filtering (startDate / endDate enforced server-side) | ✅ Done |
+| Dynamic Open Graph metadata per profile | ✅ Done |
 | Animated gradient background (themed to user's primary color) | ✅ Done |
 | "Powered by Linkle" footer badge | ✅ Done |
 | Demo profile at `/p/demo` | ✅ Done |
@@ -69,12 +74,12 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | Tabs: Social / Links / Payments / Tools | ✅ Done |
 | Add, delete, toggle visibility per link | ✅ Done |
 | Drag-and-drop reorder (persisted to DB via API) | ✅ Done |
-| Per-link click counter (mock UI; real analytics planned) | ✅ Done |
-| Pin a link as "Featured" | ✅ Done (UI) |
+| Per-link click counter (real data from ClickEvent DB) | ✅ Done |
+| Pin a link as "Featured" | ✅ Done (schema + UI) |
 | QR code modal (downloadable) | ✅ Done |
-| Email capture block (Tools tab) | ✅ Done (UI) |
-| Scheduled links (set start/end dates) | 🔲 Coming Soon |
-| Link edit in-place | 🔲 Planned |
+| Email capture settings & subscriber list (Tools tab) | ✅ Done |
+| Link edit in-place (LinkEditModal) | ✅ Done |
+| Scheduled links (set start/end dates per link) | ✅ Done (schema + UI + server enforcement) |
 
 ### 2.4 Dashboard — Appearance
 | Feature | Status |
@@ -85,6 +90,7 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | 4 button styles (Pill, Rounded, Square, Outline) | ✅ Done |
 | 7 typography / font family options | ✅ Done |
 | Location settings (address, Google Maps embed URL, visibility toggle) | ✅ Done |
+| Email capture widget settings (title, placeholder, enabled toggle) | ✅ Done |
 | Live preview panel updates in real time (React Context) | ✅ Done |
 | Save all changes via `PATCH /api/user/profile` | ✅ Done |
 
@@ -109,9 +115,11 @@ Users manage everything from a polished dashboard that features a live **mobile/
 ### 2.7 Dashboard — Monetization & Settings
 | Feature | Status |
 |---|---|
-| Monetization page (route exists) | 🔲 In Progress |
-| Settings page (route exists) | 🔲 In Progress |
-| Username settings | 🔲 Planned |
+| Monetization page — 3-tier pricing UI (Starter / Pro / Enterprise) | ✅ Done |
+| Monthly / yearly billing toggle (25% yearly discount) | ✅ Done |
+| Settings page — username & display name management | ✅ Done |
+| Account deletion with typed confirmation | ✅ Done |
+| Stripe payment backend integration | 🔲 Planned |
 
 ### 2.8 QR Code
 | Feature | Status |
@@ -119,6 +127,16 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | Auto-generated QR for `/p/<username>` | ✅ Done |
 | Download QR as PNG | ✅ Done |
 | QR accessible from Links page and Tools tab | ✅ Done |
+
+### 2.9 Email Capture
+| Feature | Status |
+|---|---|
+| `emailCaptureEnabled` / title / placeholder settings on User | ✅ Done |
+| `CapturedEmail` DB model (deduplication per user) | ✅ Done |
+| `EmailCaptureSection` widget on public profile | ✅ Done |
+| `POST /api/subscribe` backend endpoint | ✅ Done |
+| Subscriber list in dashboard Tools tab | ✅ Done |
+| CSV export of captured emails | 🔲 Planned |
 
 ---
 
@@ -136,10 +154,10 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | Layer | Technology | Version |
 |---|---|---|
 | ORM | **Prisma** | ^5.22.0 |
-| Database | **SQLite** (dev) | — |
+| Database | **PostgreSQL** (dev & prod) | — |
 | Client | `@prisma/client` | ^5.22.0 |
 
-> SQLite is used for development simplicity. For production, swap the `datasource` provider in `schema.prisma` to `postgresql` or `mysql` and update `DATABASE_URL`.
+> The schema `datasource` provider is set to `postgresql`. Ensure `DATABASE_URL` points to a valid PostgreSQL instance. For local development a local Postgres or a cloud instance (e.g. Supabase, Neon) is required.
 
 ### Authentication
 | Layer | Technology | Version |
@@ -159,12 +177,18 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | QR codes | **qrcode.react** | ^4.2.0 |
 | Utility | `clsx`, `tailwind-merge` | latest |
 
+### Email (installed, delivery pending)
+| Layer | Technology | Version |
+|---|---|---|
+| Email transport | **nodemailer** | ^7.0.13 |
+
 ### Tooling
 | Tool | Purpose |
 |---|---|
 | `eslint` + `eslint-config-next` | Linting |
 | `postcss` + `autoprefixer` | CSS processing |
 | `next dev` | Dev server (Turbopack) |
+| `ts-node` | Seed script runner (`npm run seed`) |
 
 ---
 
@@ -173,7 +197,8 @@ Users manage everything from a polished dashboard that features a live **mobile/
 ```
 d:\VibingSites\LINKLE\
 ├── prisma/
-│   └── schema.prisma          # Database schema (SQLite, Prisma models)
+│   └── schema.prisma          # Database schema (PostgreSQL, Prisma models)
+├── seed-analytics.ts          # Analytics seed script (ts-node)
 ├── src/
 │   ├── auth.ts                # NextAuth config (Credentials provider, JWT callbacks)
 │   ├── app/
@@ -184,36 +209,42 @@ d:\VibingSites\LINKLE\
 │   │   ├── register/          # Registration page
 │   │   ├── forgot-password/   # Forgot password page
 │   │   ├── reset-password/    # Reset password page (token param)
-│   │   ├── p/[username]/      # Public profile page (SSR)
+│   │   ├── p/[username]/      # Public profile page (SSR + dynamic OG metadata)
 │   │   ├── dashboard/         # Protected dashboard shell
 │   │   │   ├── layout.tsx     # Auth guard + sidebar + preview panel
-│   │   │   ├── page.tsx       # /dashboard → redirect to /dashboard/overview
+│   │   │   ├── page.tsx       # /dashboard → Links Manager (default)
 │   │   │   ├── overview/      # Dashboard home
 │   │   │   ├── appearance/    # Appearance settings
 │   │   │   ├── analytics/     # Analytics view
-│   │   │   ├── monetization/  # Monetization (planned)
-│   │   │   └── settings/      # Settings (planned)
+│   │   │   ├── monetization/  # 3-tier pricing page ✅
+│   │   │   └── settings/      # Username / account deletion settings ✅
 │   │   └── api/
 │   │       ├── auth/
 │   │       │   ├── [...nextauth]/  # NextAuth handler
 │   │       │   ├── forgot-password/route.ts
 │   │       │   └── reset-password/route.ts
 │   │       ├── links/
-│   │       │   ├── social/         # GET, POST, DELETE, PATCH toggle, POST reorder
-│   │       │   ├── business/       # GET, POST, DELETE, PATCH toggle, POST reorder
-│   │       │   └── payment/        # GET, POST, DELETE, PATCH toggle, POST reorder
+│   │       │   ├── social/         # GET, POST, DELETE, PATCH toggle, PATCH edit, POST reorder
+│   │       │   ├── business/       # GET, POST, DELETE, PATCH toggle, PATCH edit, POST reorder
+│   │       │   └── payment/        # GET, POST, DELETE, PATCH toggle, PATCH edit, POST reorder
+│   │       ├── subscribe/          # POST — email capture ✅
+│   │       ├── analytics/          # GET aggregated stats, POST view, POST click
 │   │       └── user/
-│   │           └── profile/        # PATCH user profile & appearance
+│   │           ├── profile/        # PATCH user profile & appearance
+│   │           └── settings/       # PATCH username/displayName, DELETE account ✅
 │   ├── components/
 │   │   ├── Providers.tsx           # SessionProvider wrapper
 │   │   ├── dashboard/
 │   │   │   ├── DashboardSidebar.tsx
 │   │   │   ├── LinksManager.tsx    # Social / Business / Payment / Tools tabs
-│   │   │   ├── AppearanceForm.tsx  # Theme, fonts, profile, location
+│   │   │   ├── AppearanceForm.tsx  # Theme, fonts, profile, location, email capture
 │   │   │   ├── AnalyticsDashboard.tsx
 │   │   │   ├── MobilePreview.tsx   # Live phone/desktop preview frame
 │   │   │   ├── PreviewContext.tsx  # React Context for live preview state
-│   │   │   └── QRCodeModal.tsx
+│   │   │   ├── QRCodeModal.tsx
+│   │   │   ├── LinkEditModal.tsx   # In-place link editor with scheduling ✅
+│   │   │   ├── SettingsForm.tsx    # Username change + account deletion ✅
+│   │   │   └── StyledSelect.tsx    # Custom animated icon dropdown ✅
 │   │   ├── profile/
 │   │   │   ├── ProfileContainer.tsx
 │   │   │   ├── ProfileHeader.tsx
@@ -221,7 +252,8 @@ d:\VibingSites\LINKLE\
 │   │   │   ├── BusinessSection.tsx
 │   │   │   ├── PaymentSection.tsx
 │   │   │   ├── ContactSection.tsx
-│   │   │   └── LocationSection.tsx
+│   │   │   ├── LocationSection.tsx
+│   │   │   └── EmailCaptureSection.tsx  # Newsletter subscribe widget ✅
 │   │   ├── qr/                     # QR code components
 │   │   └── ui/
 │   │       ├── ThemeToggle.tsx     # Light / dark mode toggle
@@ -269,12 +301,12 @@ Client (LinksManager)
 
 ## 5. Database Schema
 
-Linkle uses **Prisma** with **SQLite** (dev). All IDs are CUID strings. Timestamps are auto-managed.
+Linkle uses **Prisma** with **PostgreSQL**. All IDs are CUID strings. Timestamps are auto-managed.
 
 ### Models
 
 #### `User`
-The central model. Extends NextAuth's standard user with Linkle-specific profile and theme fields.
+The central model. Extends NextAuth's standard user with Linkle-specific profile, theme, and email-capture fields.
 
 | Field | Type | Notes |
 |---|---|---|
@@ -289,6 +321,9 @@ The central model. Extends NextAuth's standard user with Linkle-specific profile
 | `bio` | String? | Short bio |
 | `avatarUrl` | String? | Custom avatar URL |
 | `bannerUrl` | String? | Profile banner URL |
+| `emailCaptureEnabled` | Boolean | Default: `false` |
+| `emailCaptureTitle` | String | Default: `"Subscribe to my newsletter"` |
+| `emailCapturePlaceholder` | String | Default: `"Enter your email"` |
 | `themePrimaryColor` | String | Default: `#6366f1` |
 | `themeBackgroundColor` | String | Default: `var(--background)` |
 | `themeFontFamily` | String | Default: `Inter` |
@@ -310,6 +345,9 @@ The central model. Extends NextAuth's standard user with Linkle-specific profile
 | `label` | String? | Custom label |
 | `isVisible` | Boolean | Default `true` |
 | `order` | Int | Display order |
+| `startDate` | DateTime? | Scheduled publish start (optional) |
+| `endDate` | DateTime? | Scheduled publish end (optional) |
+| `featured` | Boolean | Default `false` — pin as featured |
 
 #### `BusinessLink`
 | Field | Type | Notes |
@@ -322,6 +360,9 @@ The central model. Extends NextAuth's standard user with Linkle-specific profile
 | `thumbnailUrl` | String? | Cover image URL |
 | `isVisible` | Boolean | Default `true` |
 | `order` | Int | Display order |
+| `startDate` | DateTime? | Scheduled publish start |
+| `endDate` | DateTime? | Scheduled publish end |
+| `featured` | Boolean | Default `false` |
 
 #### `PaymentLink`
 | Field | Type | Notes |
@@ -332,6 +373,9 @@ The central model. Extends NextAuth's standard user with Linkle-specific profile
 | `value` | String | UPI ID / payment link / wallet address |
 | `isVisible` | Boolean | Default `true` |
 | `order` | Int | Display order |
+| `startDate` | DateTime? | Scheduled publish start |
+| `endDate` | DateTime? | Scheduled publish end |
+| `featured` | Boolean | Default `false` |
 
 #### `ContactAction`
 | Field | Type | Notes |
@@ -343,6 +387,9 @@ The central model. Extends NextAuth's standard user with Linkle-specific profile
 | `url` | String | Target URL |
 | `isVisible` | Boolean | Default `true` |
 | `order` | Int | Display order |
+| `startDate` | DateTime? | Scheduled publish start |
+| `endDate` | DateTime? | Scheduled publish end |
+| `featured` | Boolean | Default `false` |
 
 #### `PasswordResetToken`
 | Field | Type | Notes |
@@ -379,6 +426,15 @@ Tracks outbound click events on user links.
 | `country` | String? | Country code |
 | `createdAt` | DateTime | Auto |
 
+#### `CapturedEmail`
+Stores subscriber emails collected via the public profile email capture widget.
+| Field | Type | Notes |
+|---|---|---|
+| `id` | String (CUID) | |
+| `userId` | String | FK → User |
+| `email` | String | Subscriber email (deduplicated per user) |
+| `createdAt` | DateTime | Auto |
+
 #### NextAuth standard models
 `Account`, `Session`, `VerificationToken` — standard NextAuth/Prisma adapter models.
 
@@ -393,14 +449,13 @@ Tracks outbound click events on user links.
 | `/register` | Client Component | No | New account creation |
 | `/forgot-password` | Client Component | No | Request password reset |
 | `/reset-password?token=<token>` | Client Component | No | Set new password |
-| `/p/[username]` | Server Component | No | Public user profile |
-| `/dashboard` | Server Component | **Yes** | Redirects to `/dashboard/overview` |
+| `/p/[username]` | Server Component | No | Public user profile (with dynamic OG metadata) |
+| `/dashboard` | Server Component | **Yes** | Links Manager (default tab) |
 | `/dashboard/overview` | Server Component | **Yes** | Dashboard home |
-| `/dashboard` (root) | Client Component | **Yes** | Links Manager (default tab) |
 | `/dashboard/appearance` | Client Component | **Yes** | Appearance & theme settings |
 | `/dashboard/analytics` | Client Component | **Yes** | Analytics dashboard |
-| `/dashboard/monetization` | — | **Yes** | Monetization (in progress) |
-| `/dashboard/settings` | — | **Yes** | Settings (in progress) |
+| `/dashboard/monetization` | Client Component | **Yes** | 3-tier pricing / plan upgrade page ✅ |
+| `/dashboard/settings` | Server Component | **Yes** | Username, display name & account deletion ✅ |
 
 ---
 
@@ -419,7 +474,7 @@ Request a password reset token.
 // Response (always 200 to avoid leaking user existence)
 { "success": true }
 ```
-The reset link is currently **logged to the server console**. Email delivery is planned.
+The reset link is currently **logged to the server console**. Email delivery via nodemailer is planned.
 
 ---
 
@@ -461,6 +516,9 @@ Toggles `isVisible` for the link.
 { "isVisible": true }
 ```
 
+#### `PATCH /api/links/social/[id]`
+Updates an existing link's properties (label, url, startDate, endDate, featured, etc.).
+
 #### `POST /api/links/social/reorder`
 Persists a new display order after drag-and-drop.
 ```json
@@ -486,9 +544,50 @@ Updates profile info and appearance settings.
   "themeFontFamily": "Inter",
   "locationAddress": "123 Studio, Mumbai",
   "locationGoogleMapsEmbedUrl": "https://www.google.com/maps/embed?...",
-  "locationIsVisible": true
+  "locationIsVisible": true,
+  "emailCaptureEnabled": true,
+  "emailCaptureTitle": "Join my newsletter",
+  "emailCapturePlaceholder": "your@email.com"
 }
 // Response 200 — updated user object
+```
+
+---
+
+### User Settings Endpoints
+
+#### `PATCH /api/user/settings`
+Updates the authenticated user's username and/or display name. Validates username uniqueness and format (3–20 chars, alphanumeric + `-` / `_`).
+```json
+// Body
+{ "username": "janedoe", "displayName": "Jane Doe" }
+
+// Response 200 — updated user object
+// Errors: 400 (invalid format, username already taken), 401, 500
+```
+
+#### `DELETE /api/user/settings`
+Permanently deletes the authenticated user's account. Prisma `onDelete: Cascade` removes all related links, analytics events, captured emails, and sessions.
+```json
+// Response 200
+{ "success": true }
+// Errors: 401, 500
+```
+
+---
+
+### Email Capture Endpoint
+
+#### `POST /api/subscribe`
+Captures an email for a user's newsletter list. No authentication required — called from the public profile page.
+```json
+// Body
+{ "username": "janedoe", "email": "visitor@example.com" }
+
+// Response 201
+{ "success": true, "subscription": { "id": "...", "email": "...", "createdAt": "..." } }
+
+// Errors: 400 (duplicate email, invalid format), 404 (username not found), 500
 ```
 
 ---
@@ -571,11 +670,14 @@ Fetches real aggregated performance metrics and charts for the authenticated use
 |---|---|
 | `DashboardSidebar.tsx` | Persistent left nav with logo, user info, nav links, sign-out |
 | `LinksManager.tsx` | Tabbed interface for Social / Business / Payment / Tools; DnD reorder |
-| `AppearanceForm.tsx` | Profile info, colour themes, button styles, typography, location |
+| `AppearanceForm.tsx` | Profile info, colour themes, button styles, typography, location, email capture settings |
 | `AnalyticsDashboard.tsx` | Stats cards, bar chart, top links, device & country breakdown |
 | `MobilePreview.tsx` | Live phone/desktop frame; renders real profile components |
 | `PreviewContext.tsx` | React Context + provider that holds the live preview user state |
 | `QRCodeModal.tsx` | Modal with `qrcode.react` QR for the user's profile URL + download |
+| `LinkEditModal.tsx` | Full-featured in-place link editor for social, business, and payment links; supports scheduled start/end dates |
+| `SettingsForm.tsx` | Username & display name editor + danger zone account deletion with typed confirmation |
+| `StyledSelect.tsx` | Custom animated dropdown with icon support; used in link modals and platform selectors |
 
 ### Profile Components (`src/components/profile/`)
 
@@ -583,13 +685,14 @@ These components are used both on the **public profile page** (`/p/[username]`) 
 
 | Component | Purpose |
 |---|---|
-| `ProfileContainer.tsx` | Wrapper that fetches and assembles the full public profile |
+| `ProfileContainer.tsx` | Wrapper that assembles the full public profile; centralised analytics event bubbling via data attributes |
 | `ProfileHeader.tsx` | Avatar, banner image, display name, username handle, bio |
 | `SocialLinks.tsx` | Renders social platform icon buttons |
 | `BusinessSection.tsx` | Renders titled link cards with optional description |
 | `PaymentSection.tsx` | Renders payment method buttons (UPI, PayPal, Crypto etc.) |
 | `ContactSection.tsx` | Renders contact action buttons (vCard, booking, resume) |
 | `LocationSection.tsx` | Renders address text, Google Maps iframe, directions button |
+| `EmailCaptureSection.tsx` | Animated newsletter subscribe widget; calls `POST /api/subscribe`; adapts border-radius to user's `buttonStyle` |
 
 ### UI Components (`src/components/ui/`)
 
@@ -604,7 +707,7 @@ These components are used both on the **public profile page** (`/p/[username]`) 
 
 ```
 Registration
-  POST /api/register (or /api/auth/register)
+  POST /api/auth/register
     → Validate email uniqueness
     → bcrypt.hash(password, 10)
     → prisma.user.create()
@@ -630,7 +733,7 @@ Password Reset
   2. POST /api/auth/forgot-password
      → Generate 32-byte hex token
      → Store in PasswordResetToken (expires 1h)
-     → Log reset URL to console (email sending planned)
+     → Log reset URL to console (nodemailer email sending planned)
   3. User visits /reset-password?token=<token>
   4. POST /api/auth/reset-password
      → Validate token exists & not expired
@@ -638,6 +741,14 @@ Password Reset
      → prisma.user.update({ password })
      → prisma.passwordResetToken.delete()
      → Redirect to /login
+
+Account Deletion
+  1. User visits /dashboard/settings → Danger Zone
+  2. Types "delete my account" to confirm
+  3. DELETE /api/user/settings
+     → auth() session check
+     → prisma.user.delete() — Prisma cascade removes all related records
+     → signOut({ callbackUrl: "/" })
 ```
 
 ---
@@ -682,43 +793,59 @@ Profile components reference `var(--user-primary)` for button backgrounds, icon 
 ## 11. Planning & Roadmap
 
 ### Current Status
-The core product is functional end-to-end:
-- ✅ Auth (register, login, forgot/reset password)
-- ✅ Public profiles with full theming
+The core product is fully functional end-to-end:
+- ✅ Auth (register, login, forgot/reset password, account deletion)
+- ✅ Public profiles with full theming, dynamic OG metadata, and scheduled link filtering
 - ✅ Dashboard with live preview
-- ✅ Links CRUD (social, business, payment) with DnD reorder
-- ✅ Appearance customisation persisted to DB
+- ✅ Links CRUD (social, business, payment, contact) with DnD reorder
+- ✅ In-place link editing with scheduled dates (LinkEditModal)
+- ✅ Featured link pinning
+- ✅ Appearance customisation persisted to DB (incl. email capture settings)
 - ✅ QR code generation and download
 - ✅ Real-time analytics system (page views, link clicks, unique visitors, device & country breakdowns, dynamic 14-day daily charts)
+- ✅ Email capture / newsletter subscription widget with backend deduplication
+- ✅ Monetization pricing page (3-tier: Starter / Pro / Enterprise, monthly/yearly toggle)
+- ✅ Settings page (username change with uniqueness validation + account deletion with confirmation)
 
-### Immediate Next Steps
-| Priority | Feature | Notes |
-|---|---|---|
-| 🔴 High | Email delivery for password reset | Integrate Resend / Nodemailer |
-| 🔴 High | Username setup flow | Enforce unique username on register/settings |
-| 🔴 High | Link edit functionality | In-place edit for existing links |
-| 🟡 Medium | Monetization page | Subscription tiers, Stripe integration |
-| 🟡 Medium | Settings page | Account settings, danger zone (delete account) |
-| 🟡 Medium | OAuth providers | Google, GitHub sign-in |
-| 🟢 Low | Scheduled links | Date-gated link visibility |
-| 🟢 Low | Email capture backend | Store captured emails, CSV export |
-| 🟢 Low | Featured links persistence | Persist star/featured state to DB |
-| 🟢 Low | Production database | Migrate SQLite → PostgreSQL for deployment |
-| 🟢 Low | Custom domain support | Map custom domains to `/p/<username>` |
+### Feature Notes
 
-### Implemented Feature: Real-Time Analytics System
-The Linkle analytics engine replaces all static charts and mock records with real database events:
+#### Real-Time Analytics System
 - **`ProfileView` & `ClickEvent`**: Tracks every mount on public `/p/[username]` paths and any outbound link tap.
-- **Client-Side Event Bubbling**: Utilizes a centralized bubbling click-handler inside the root `ProfileContainer` that catches tracking attributes (`data-track-id`, `data-track-type`, etc.) dynamically without bloated per-component onClick properties.
-- **Edge-Based Geolocation & Device Parsing**: Uses lightweight headers (`x-vercel-ip-country`, `cf-ipcountry`) and client user-agent parsing for instant geolocation and device breakdowns.
-- **Prisma Aggregations**: Uses highly optimized relational aggregates (`groupBy`, `count`, `distinct`) to feed performance widgets, chronological 14-day tracking charts, top links lists, and visitor counts.
+- **Client-Side Event Bubbling**: A centralized click-handler in `ProfileContainer` catches tracking attributes (`data-track-id`, `data-track-type`, etc.) without bloated per-component `onClick` props.
+- **Edge-Based Geolocation & Device Parsing**: Uses `x-vercel-ip-country` / `cf-ipcountry` headers and client user-agent parsing.
+- **Prisma Aggregations**: `groupBy`, `count`, `distinct` for all dashboard widgets.
 
-### Planned Feature: Email Delivery
-Use **Resend** (or Nodemailer + SMTP) to send password-reset emails. Update `forgot-password/route.ts`:
+#### Email Capture System
+- Toggle enabled in Appearance dashboard; title/placeholder are customisable.
+- `EmailCaptureSection` on public profile adapts border-radius to the user's `buttonStyle`.
+- `POST /api/subscribe` validates email format and deduplicates per user.
+
+#### Scheduled Links
+- `startDate` / `endDate` on every link model (`SocialLink`, `BusinessLink`, `PaymentLink`, `ContactAction`).
+- Profile page server-side filters links at render time — expired or future-dated links are never served to visitors.
+- `LinkEditModal` exposes date pickers for scheduling.
+
+### Planned
+| Feature | Notes |
+|---|---|
+| Email delivery for password reset | `nodemailer` installed; SMTP config pending |
+| Stripe payment backend | Wiring Pro/Enterprise upgrades |
+| OAuth providers | Google, GitHub (NextAuth adapter ready) |
+| Custom domains | Pro tier feature |
+| Captured email CSV export | Dashboard Tools tab |
+
+### Planned: Email Delivery
+Use **nodemailer** (already installed) to send password-reset emails. Update `forgot-password/route.ts`:
 ```ts
-import { Resend } from 'resend';
-const resend = new Resend(process.env.RESEND_API_KEY);
-await resend.emails.send({
+import nodemailer from 'nodemailer';
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: 587,
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+});
+
+await transporter.sendMail({
   from: 'Linkle <no-reply@linkle.app>',
   to: email,
   subject: 'Reset your Linkle password',
@@ -734,12 +861,13 @@ await resend.emails.send({
 - Node.js 18+
 - npm / pnpm
 - Git
+- PostgreSQL instance (local or cloud, e.g. Supabase, Neon)
 
 ### Environment Variables
 Create a `.env` file in the project root:
 ```env
-# Database
-DATABASE_URL="file:./dev.db"
+# Database (PostgreSQL)
+DATABASE_URL="postgresql://user:password@localhost:5432/linkle"
 
 # NextAuth
 NEXTAUTH_SECRET="your-random-secret-here"
@@ -747,6 +875,11 @@ NEXTAUTH_URL="http://localhost:3000"
 
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Email (optional — for password reset delivery)
+SMTP_HOST="smtp.example.com"
+SMTP_USER="no-reply@example.com"
+SMTP_PASS="your-smtp-password"
 ```
 
 ### Installation & Dev Server
@@ -763,6 +896,12 @@ npm run dev
 ```
 App will be available at **http://localhost:3000**
 
+### Seed Analytics Data (optional)
+```bash
+npm run seed
+```
+Populates sample `ProfileView` and `ClickEvent` records for a demo account using `seed-analytics.ts`.
+
 ### Database GUI (optional)
 ```bash
 npx prisma studio
@@ -775,15 +914,17 @@ npx prisma studio
 | Production build | `npm run build` | Creates optimised production bundle |
 | Start production | `npm run start` | Starts production server |
 | Lint | `npm run lint` | ESLint check |
+| Seed analytics | `npm run seed` | Seeds sample analytics data via ts-node |
 | Postinstall | `prisma generate` | Auto-runs after `npm install` |
 
 ### Deployment Notes
-1. Switch `DATABASE_URL` to a PostgreSQL connection string and update `schema.prisma` provider to `"postgresql"`.
+1. Ensure `DATABASE_URL` is a **PostgreSQL** connection string (provider in `schema.prisma` is already `postgresql`).
 2. Run `npx prisma migrate deploy` in CI/CD.
 3. Set `NEXTAUTH_SECRET` to a strong random value (`openssl rand -base64 32`).
 4. Set `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` to your production domain.
 5. Deploy to **Vercel** (recommended for Next.js) or any Node.js host.
+6. For geolocation analytics, Vercel and Cloudflare automatically inject `x-vercel-ip-country` / `cf-ipcountry` headers — no extra config needed.
 
 ---
 
-*Documentation generated: June 2026 · Linkle v1.0.0*
+*Documentation updated: July 2026 · Linkle v1.1.0*

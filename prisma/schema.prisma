@@ -89,6 +89,13 @@ model User {
   locationShowDirectionsBtn  Boolean @default(true)
   locationIsVisible          Boolean @default(true)
 
+  // Billing fields
+  plan                   String    @default("Starter")
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+
   accounts      Account[]
   sessions      Session[]
 
@@ -170,8 +177,10 @@ model ProfileView {
   country   String?
   createdAt DateTime @default(now())
   
-  @@index([userId])
-  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([userId, visitorId])
+  @@index([userId, country])
+  @@index([userId, device])
 }
 
 model ClickEvent {
@@ -187,8 +196,8 @@ model ClickEvent {
   country   String?
   createdAt DateTime @default(now())
   
-  @@index([userId])
-  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([userId, linkId, linkType])
 }
 
 model CapturedEmail {
@@ -198,6 +207,5 @@ model CapturedEmail {
   email     String
   createdAt DateTime @default(now())
 
-  @@index([userId])
-  @@index([createdAt])
+  @@index([userId, createdAt])
 }

@@ -1,21 +1,23 @@
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { SubscribeSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, email } = await req.json();
-    if (!username || !email) {
-      return NextResponse.json({ error: "Username and email are required." }, { status: 400 });
+    const body = await req.json();
+    const validation = SubscribeSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.issues[0].message },
+        { status: 400 }
+      );
     }
 
-    const trimmedEmail = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      return NextResponse.json({ error: "Invalid email format." }, { status: 400 });
-    }
+    const { username, email } = validation.data;
 
     const user = await prisma.user.findUnique({
-      where: { username: username.trim().toLowerCase() }
+      where: { username }
     });
 
     if (!user) {
@@ -26,7 +28,7 @@ export async function POST(req: NextRequest) {
     const existing = await prisma.capturedEmail.findFirst({
       where: {
         userId: user.id,
-        email: trimmedEmail,
+        email,
       }
     });
 
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
     const subscription = await prisma.capturedEmail.create({
       data: {
         userId: user.id,
-        email: trimmedEmail,
+        email,
       }
     });
 
@@ -47,3 +49,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+

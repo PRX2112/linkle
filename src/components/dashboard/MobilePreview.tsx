@@ -29,18 +29,24 @@ export default function MobilePreview() {
     );
   }
 
-  const themePrimary = user.theme?.primaryColor || "#6366f1";
+  const rawUser = user as any;
+  const themePrimary = rawUser.themePrimaryColor || user.theme?.primaryColor || "#6366f1";
   
-  // Provide defaults for the theme object so the components don't crash
-  const theme = user.theme || {
-    primaryColor: "#6366f1",
-    backgroundColor: "light",
-    fontFamily: "Inter",
-    buttonStyle: "pill"
+  const theme = {
+    primaryColor: themePrimary,
+    backgroundColor: rawUser.themeBackgroundColor || user.theme?.backgroundColor || "light",
+    fontFamily: rawUser.themeFontFamily || user.theme?.fontFamily || "Inter",
+    buttonStyle: rawUser.themeButtonStyle || user.theme?.buttonStyle || "pill"
   };
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full relative z-10 px-4">
+      {/* Dynamic Google Font Loader */}
+      {theme.fontFamily && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          @import url('https://fonts.googleapis.com/css2?family=${theme.fontFamily.replace(/\s+/g, '+')}:wght@400;500;600;700;800;900&display=swap');
+        `}} />
+      )}
       {/* Controls */}
       <div className="flex items-center gap-4 mb-6">
         <div className="flex items-center bg-white dark:bg-zinc-900 p-1 rounded-full border border-gray-200 dark:border-zinc-800 shadow-sm">
@@ -94,7 +100,10 @@ export default function MobilePreview() {
         {/* Scrollable Content (simulating the profile container) */}
         <div 
           className="flex-1 overflow-y-auto no-scrollbar pb-10 flex flex-col relative bg-background items-center w-full"
-          style={{ "--user-primary": themePrimary } as React.CSSProperties}
+          style={{ 
+            "--user-primary": themePrimary,
+            fontFamily: theme.fontFamily 
+          } as React.CSSProperties}
         >
             {/* Animated Background Blobs but smaller for the preview */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">

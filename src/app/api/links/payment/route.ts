@@ -1,8 +1,10 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-export const dynamic = "force-dynamic";
+import { PaymentLinkCreateSchema } from "@/lib/validation";
+import { revalidateProfile } from "@/lib/cache";
 
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const session = await auth();
@@ -15,10 +17,29 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { platform, value } = await req.json();
-  if (!platform || !value) return NextResponse.json({ error: "platform and value required" }, { status: 400 });
+  try {
+    const body = await req.json();
+    const validation = PaymentLinkCreateSchema.safeParse(body);
 
-  const count = await prisma.paymentLink.count({ where: { userId: session.user.id } });
-  const link = await prisma.paymentLink.create({ data: { userId: session.user.id, platform, value, order: count } });
-  return NextResponse.json(link, { status: 201 });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.issues[0].message },
+        { status: 400 }
+      );
+    }
+
+    const { platform, value } = validation.data;
+
+    const count = await prisma.paymentLink.count({ where: { userId: session.user.id } });
+    const link = await prisma.paymentLink.create({ data: { userId: session.user.id, platform, value, order: count } });
+
+    revalidateProfile(session.user.username);
+
+    return NextResponse.json(link, { status: 201 });
+  } catch (error) {
+    console.error("Create payment link failed:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
+
+

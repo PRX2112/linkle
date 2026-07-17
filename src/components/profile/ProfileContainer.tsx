@@ -97,9 +97,16 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
             onClick={handleContainerClick}
             className="min-h-screen pb-20 bg-background flex flex-col items-center relative"
             style={{ 
-                '--user-primary': user.theme.primaryColor || '#6366f1' 
+                '--user-primary': user.theme.primaryColor || '#6366f1',
+                fontFamily: user.theme.fontFamily || 'Inter'
             } as React.CSSProperties}
         >
+            {/* Dynamic Google Font Loader */}
+            {user.theme.fontFamily && (
+                <style dangerouslySetInnerHTML={{ __html: `
+                    @import url('https://fonts.googleapis.com/css2?family=${user.theme.fontFamily.replace(/\s+/g, '+')}:wght@400;500;600;700;800;900&display=swap');
+                `}} />
+            )}
             {/* Animated Background Blobs */}
             <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
                 <div className="absolute top-1/4 -left-20 w-72 h-72 rounded-full blur-3xl animate-float opacity-20" style={{ backgroundColor: 'var(--user-primary)' }}></div>

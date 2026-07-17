@@ -24,6 +24,8 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@prisma/client": "^5.22.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "dnd-kit": "^0.0.2",
@@ -35,7 +37,9 @@
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.4.0"
+    "stripe": "^22.3.2",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

@@ -1,6 +1,9 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { PaymentLinkUpdateSchema } from "@/lib/validation";
+import { revalidateProfile } from "@/lib/cache";
+
 export const dynamic = "force-dynamic";
 
 
@@ -13,6 +16,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!link || link.userId !== session.user.id) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await prisma.paymentLink.delete({ where: { id } });
+
+  revalidateProfile(session.user.username);
+
   return NextResponse.json({ success: true });
 }
 
@@ -25,7 +31,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!link || link.userId !== session.user.id) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   try {
-    const { platform, value, startDate, endDate, featured } = await req.json();
+    const body = await req.json();
+    const validation = PaymentLinkUpdateSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.issues[0].message },
+        { status: 400 }
+      );
+    }
+
+    const { platform, value, startDate, endDate, featured } = validation.data;
 
     const updatedLink = await prisma.paymentLink.update({
       where: { id },
@@ -38,9 +54,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       },
     });
 
+    revalidateProfile(session.user.username);
+
     return NextResponse.json(updatedLink);
   } catch (error) {
     console.error("Failed to update payment link:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+

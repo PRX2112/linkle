@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { after } from "next/server";
+import { auth } from "@/auth";
 
 export async function POST(request: Request) {
   try {
@@ -9,6 +11,10 @@ export async function POST(request: Request) {
     if (!userId || !linkId || !linkType) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+
+    // Exclude owner's clicks from analytics pollution
+    const session = await auth();
+    const isOwner = session?.user?.id === userId;
 
     // Detect Device from User-Agent
     const userAgent = request.headers.get("user-agent") || "";
@@ -25,18 +31,25 @@ export async function POST(request: Request) {
       request.headers.get("cf-ipcountry") ||
       "Unknown";
 
-    // Record click event
-    await prisma.clickEvent.create({
-      data: {
-        userId,
-        linkId,
-        linkType,
-        linkTitle: linkTitle || linkType,
-        url: url || "",
-        referrer: referrer || "Direct",
-        device,
-        country,
-      },
+    // Defer the database insert to run asynchronously after response is sent
+    after(async () => {
+      if (isOwner) return;
+      try {
+        await prisma.clickEvent.create({
+          data: {
+            userId,
+            linkId,
+            linkType,
+            linkTitle: linkTitle || linkType,
+            url: url || "",
+            referrer: referrer || "Direct",
+            device,
+            country,
+          },
+        });
+      } catch (err) {
+        console.error("Delayed analytics click tracking failed:", err);
+      }
     });
 
     return NextResponse.json({ success: true });
@@ -45,3 +58,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+

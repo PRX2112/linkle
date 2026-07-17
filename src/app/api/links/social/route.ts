@@ -1,8 +1,10 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-export const dynamic = "force-dynamic";
+import { SocialLinkCreateSchema } from "@/lib/validation";
+import { revalidateProfile } from "@/lib/cache";
 
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const session = await auth();
@@ -15,10 +17,28 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { platform, url, label } = await req.json();
-  if (!platform || !url) return NextResponse.json({ error: "platform and url required" }, { status: 400 });
+  try {
+    const body = await req.json();
+    const validation = SocialLinkCreateSchema.safeParse(body);
 
-  const count = await prisma.socialLink.count({ where: { userId: session.user.id } });
-  const link = await prisma.socialLink.create({ data: { userId: session.user.id, platform, url, label, order: count } });
-  return NextResponse.json(link, { status: 201 });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.issues[0].message },
+        { status: 400 }
+      );
+    }
+
+    const { platform, url, label } = validation.data;
+
+    const count = await prisma.socialLink.count({ where: { userId: session.user.id } });
+    const link = await prisma.socialLink.create({ data: { userId: session.user.id, platform, url, label, order: count } });
+
+    revalidateProfile(session.user.username);
+
+    return NextResponse.json(link, { status: 201 });
+  } catch (error) {
+    console.error("Create social link failed:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
+
