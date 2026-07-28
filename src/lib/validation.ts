@@ -76,7 +76,7 @@ export const LinkReorderSchema = z.object({
       id: z.string().cuid("Invalid ID format"),
       order: z.number().int().nonnegative("Order must be a non-negative integer"),
     })
-  , { message: "Links array is required" }),
+    , { message: "Links array is required" }),
 });
 
 // Social Link schemas

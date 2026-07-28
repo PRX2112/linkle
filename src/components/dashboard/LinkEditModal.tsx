@@ -89,6 +89,16 @@ export default function LinkEditModal({ item, onClose, onSave }: LinkEditModalPr
     endDate: item.type === "payment" ? formatInitialDate(item.data.endDate) : "",
   });
 
+  const formatIsoForSubmit = (dateStr: string) => {
+    if (!dateStr || dateStr.trim() === "") return null;
+    try {
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? null : d.toISOString();
+    } catch {
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -104,12 +114,16 @@ export default function LinkEditModal({ item, onClose, onSave }: LinkEditModalPr
         platform: socialForm.platform,
         url: fullUrl,
         label: socialForm.label,
-        startDate: socialForm.startDate,
-        endDate: socialForm.endDate,
+        startDate: formatIsoForSubmit(socialForm.startDate),
+        endDate: formatIsoForSubmit(socialForm.endDate),
       };
       endpoint = `/api/links/social/${item.data.id}`;
     } else if (item.type === "business") {
-      body = businessForm;
+      body = {
+        ...businessForm,
+        startDate: formatIsoForSubmit(businessForm.startDate),
+        endDate: formatIsoForSubmit(businessForm.endDate),
+      };
       endpoint = `/api/links/business/${item.data.id}`;
     } else if (item.type === "payment") {
       const base = paymentBaseUrls[paymentForm.platform];
@@ -117,8 +131,8 @@ export default function LinkEditModal({ item, onClose, onSave }: LinkEditModalPr
       body = {
         platform: paymentForm.platform,
         value: fullValue,
-        startDate: paymentForm.startDate,
-        endDate: paymentForm.endDate,
+        startDate: formatIsoForSubmit(paymentForm.startDate),
+        endDate: formatIsoForSubmit(paymentForm.endDate),
       };
       endpoint = `/api/links/payment/${item.data.id}`;
     }
