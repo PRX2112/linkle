@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import { UserProfile } from "@/lib/types";
 import { Globe, ArrowRight, MoreVertical, Smartphone, Monitor, RefreshCw } from "lucide-react";
 
@@ -143,7 +144,8 @@ export default function MobilePreview() {
                     </div>
                 )}
                 
-                <div className="mt-12 mb-4 text-center">
+                <div className="mt-12 mb-4 text-center flex items-center justify-center gap-1.5">
+                    <Image src="/logo.png" alt="Linkle Logo" width={14} height={14} className="object-contain" />
                     <p className="text-[10px] text-gray-400">
                         Powered by <span className="font-bold text-gray-800 dark:text-gray-200">Linkle</span>
                     </p>

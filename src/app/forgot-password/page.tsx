@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { ArrowLeft, Mail, CheckCircle } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,19 +19,18 @@ export default function ForgotPasswordPage() {
     try {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        throw new Error("Something went wrong");
+        throw new Error(data.error || "Failed to send reset email");
       }
 
       setSuccess(true);
-    } catch {
-      setError("Failed to send reset link. Please try again.");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -43,8 +44,13 @@ export default function ForgotPasswordPage() {
       </div>
 
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="font-bold text-3xl tracking-tighter gradient-text">Linkle.</Link>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Link href="/" className="inline-flex items-center gap-3 group">
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105">
+              <Image src="/logo.png" alt="Linkle Logo" width={40} height={40} className="object-contain" priority />
+            </div>
+            <span className="font-bold text-3xl tracking-tighter gradient-text">Linkle.</span>
+          </Link>
           <h1 className="mt-4 text-2xl font-bold text-foreground">Reset your password</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Enter your email and we'll send you a link to reset your password</p>
         </div>

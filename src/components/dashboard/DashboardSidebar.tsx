@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -30,7 +31,12 @@ export default function DashboardSidebar({ user }: { user: User }) {
     <>
       {/* Logo */}
       <div className="mb-8 px-2 flex items-center justify-between">
-        <Link href="/" onClick={onLinkClick} className="font-bold text-2xl tracking-tighter gradient-text">Linkle.</Link>
+        <Link href="/" onClick={onLinkClick} className="flex items-center gap-2.5 group">
+          <div className="relative w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105">
+            <Image src="/logo.png" alt="Linkle Logo" width={32} height={32} className="object-contain" priority />
+          </div>
+          <span className="font-bold text-2xl tracking-tighter gradient-text">Linkle.</span>
+        </Link>
         {onLinkClick && (
           <button
             onClick={onLinkClick}
@@ -112,7 +118,12 @@ export default function DashboardSidebar({ user }: { user: User }) {
     <>
       {/* Mobile Sticky Navbar Header */}
       <header className="lg:hidden w-full h-16 fixed top-0 left-0 right-0 z-40 bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-4 flex items-center justify-between shadow-sm">
-        <Link href="/" className="font-bold text-2xl tracking-tighter gradient-text">Linkle.</Link>
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="relative w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center">
+            <Image src="/logo.png" alt="Linkle Logo" width={28} height={28} className="object-contain" priority />
+          </div>
+          <span className="font-bold text-2xl tracking-tighter gradient-text">Linkle.</span>
+        </Link>
         
         <div className="flex items-center gap-3">
           {user.username && (

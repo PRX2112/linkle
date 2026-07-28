@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { UserProfile } from "@/lib/types";
 import ProfileHeader from "./ProfileHeader";
 import SocialLinks from "./SocialLinks";
@@ -219,10 +221,13 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
 
             <LocationSection location={user.location} theme={user.theme} />
 
-            <div className="mt-12 text-center">
-                <p className="text-sm text-gray-400">
-                    Powered by <span className="font-bold gradient-text">Linkle</span>
-                </p>
+            <div className="mt-12 text-center flex items-center justify-center">
+                <Link href="/" className="inline-flex items-center gap-2 group opacity-80 hover:opacity-100 transition-opacity">
+                    <Image src="/logo.png" alt="Linkle Logo" width={18} height={18} className="object-contain" />
+                    <span className="text-sm font-medium text-gray-400">
+                        Powered by <span className="font-bold gradient-text">Linkle</span>
+                    </span>
+                </Link>
             </div>
         </div>
     );

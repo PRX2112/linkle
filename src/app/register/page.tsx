@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
@@ -60,8 +61,13 @@ export default function RegisterPage() {
       </div>
 
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="font-bold text-3xl tracking-tighter gradient-text">Linkle.</Link>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Link href="/" className="inline-flex items-center gap-3 group">
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105">
+              <Image src="/logo.png" alt="Linkle Logo" width={40} height={40} className="object-contain" priority />
+            </div>
+            <span className="font-bold text-3xl tracking-tighter gradient-text">Linkle.</span>
+          </Link>
           <h1 className="mt-4 text-2xl font-bold text-foreground">Create your Linkle</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">It&apos;s free and takes 30 seconds</p>
         </div>
