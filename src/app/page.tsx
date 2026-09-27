@@ -17,7 +17,7 @@ export default async function Home() {
             {/* Navbar */}
             <nav className="p-6 flex items-center justify-between max-w-7xl mx-auto w-full relative z-10">
                 <Link href="/" className="flex items-center gap-2.5 group">
-                    <div className="relative w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105">
+                    <div className="relative w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center">
                         <Image src="/logo.png" alt="Linkle Logo" width={32} height={32} className="object-contain" priority />
                     </div>
                     <span className="font-bold text-2xl tracking-tighter gradient-text">Linkle.</span>

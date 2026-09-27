@@ -6,6 +6,7 @@ import { Plus, Globe, Instagram, Twitter, Linkedin, Youtube, Github, Mail, Phone
 import QRCodeModal from "./QRCodeModal";
 import LinkEditModal from "./LinkEditModal";
 import StyledSelect from "./StyledSelect";
+import ImageUpload from "@/components/ui/ImageUpload";
 import {
   DndContext,
   closestCenter,
@@ -519,6 +520,11 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
               {businessLinks.map((link) => (
                 <SortableItem key={link.id} id={link.id}>
                   <div className="group flex flex-col sm:flex-row sm:items-center gap-4 p-5 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-[0_8px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.2)] hover:border-gray-200 dark:hover:border-zinc-700 transition-all">
+                    {link.thumbnailUrl && (
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800 shrink-0 border border-gray-100 dark:border-zinc-800">
+                        <img src={link.thumbnailUrl} alt={link.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         {link.title}
@@ -568,7 +574,7 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
               <Plus className="w-4 h-4 text-purple-500" />
               Add Link Block
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <input value={newBusiness.title} onChange={(e) => setNewBusiness((p) => ({ ...p, title: e.target.value }))}
                 placeholder="Title (e.g., My Portfolio)"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40" />
@@ -578,12 +584,26 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
               <input value={newBusiness.description} onChange={(e) => setNewBusiness((p) => ({ ...p, description: e.target.value }))}
                 placeholder="Short description (optional)"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40" />
+              
+              <div>
+                <ImageUpload
+                  label="Thumbnail Image (optional)"
+                  helperText="Upload a thumbnail for your link card. Auto-compressed and optimized."
+                  value={newBusiness.thumbnailUrl}
+                  onChange={(url) => setNewBusiness((p) => ({ ...p, thumbnailUrl: url }))}
+                  aspectRatio="thumbnail"
+                  folder="thumbnails"
+                  maxWidth={600}
+                  maxHeight={600}
+                />
+              </div>
             </div>
             <button onClick={handleSaveBusiness} disabled={saving || !newBusiness.title || !newBusiness.url}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl gradient-bg text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition-all shadow-glow">
               Add To Profile
             </button>
           </div>
+
         </section>
       )}
 

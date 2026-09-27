@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Calendar } from "lucide-react";
+import ImageUpload from "@/components/ui/ImageUpload";
 
 interface SocialLink { id: string; platform: string; url: string; label?: string | null; isVisible: boolean; order: number; userId: string; startDate?: Date | string | null; endDate?: Date | string | null; }
 interface BusinessLink { id: string; title: string; url: string; description?: string | null; thumbnailUrl?: string | null; isVisible: boolean; order: number; userId: string; startDate?: Date | string | null; endDate?: Date | string | null; }
@@ -78,9 +79,11 @@ export default function LinkEditModal({ item, onClose, onSave }: LinkEditModalPr
     title: item.type === "business" ? item.data.title : "",
     url: item.type === "business" ? item.data.url : "",
     description: item.type === "business" ? item.data.description || "" : "",
+    thumbnailUrl: item.type === "business" ? item.data.thumbnailUrl || "" : "",
     startDate: item.type === "business" ? formatInitialDate(item.data.startDate) : "",
     endDate: item.type === "business" ? formatInitialDate(item.data.endDate) : "",
   });
+
 
   const [paymentForm, setPaymentForm] = useState({
     platform: item.type === "payment" ? item.data.platform : "",
@@ -252,6 +255,18 @@ export default function LinkEditModal({ item, onClose, onSave }: LinkEditModalPr
                   placeholder="Tell your audience about this link..."
                   rows={3}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/40 transition-all resize-none"
+                />
+              </div>
+              <div>
+                <ImageUpload
+                  label="Thumbnail Image (Optional)"
+                  helperText="Upload or update the thumbnail image for this link card. Auto-compressed before upload."
+                  value={businessForm.thumbnailUrl}
+                  onChange={(url) => setBusinessForm(prev => ({ ...prev, thumbnailUrl: url }))}
+                  aspectRatio="thumbnail"
+                  folder="thumbnails"
+                  maxWidth={600}
+                  maxHeight={600}
                 />
               </div>
             </>

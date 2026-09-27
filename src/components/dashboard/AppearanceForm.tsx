@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePreview } from "./PreviewContext";
 import { Check, Palette, Type, Layout, MapPin, ChevronDown } from "lucide-react";
+import ImageUpload from "@/components/ui/ImageUpload";
 
 interface User {
   id: string;
@@ -250,16 +251,35 @@ export default function AppearanceForm({ user }: { user: User }) {
                 <textarea name="bio" value={form.bio} onChange={handleChange} rows={3}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/40 resize-none" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Avatar URL</label>
-                <input name="avatarUrl" value={form.avatarUrl} onChange={handleChange} placeholder="https://..."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40" />
+
+              {/* Avatar Upload */}
+              <div className="pt-2 border-t border-gray-100 dark:border-zinc-800">
+                <ImageUpload
+                  label="Avatar Photo"
+                  helperText="Upload your profile picture. Automatically compressed and optimized before uploading to Cloudinary."
+                  value={form.avatarUrl}
+                  onChange={(url) => setForm((prev) => ({ ...prev, avatarUrl: url }))}
+                  aspectRatio="square"
+                  folder="avatars"
+                  maxWidth={800}
+                  maxHeight={800}
+                />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Banner URL <span className="text-gray-400">(optional)</span></label>
-                <input name="bannerUrl" value={form.bannerUrl} onChange={handleChange} placeholder="https://..."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/40" />
+
+              {/* Banner Upload */}
+              <div className="pt-2 border-t border-gray-100 dark:border-zinc-800">
+                <ImageUpload
+                  label="Banner Photo (optional)"
+                  helperText="Upload a header banner image. Auto-compressed before upload."
+                  value={form.bannerUrl}
+                  onChange={(url) => setForm((prev) => ({ ...prev, bannerUrl: url }))}
+                  aspectRatio="banner"
+                  folder="banners"
+                  maxWidth={1920}
+                  maxHeight={1080}
+                />
               </div>
+
             </section>
           )}
 

@@ -1463,7 +1463,7 @@ npm run dev
 
 ### Phase 3 — Scale & Polish
 - [ ] Rate limiting on API routes (protect against abuse)
-- [ ] Image upload (Cloudinary / Vercel Blob) instead of URL input
+- [x] Image upload (Cloudinary) with client compression & image-only restrictions
 - [ ] Admin panel for platform management
 - [ ] Affiliate / referral system for "Powered by Linkle" badge
 

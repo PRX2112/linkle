@@ -5,8 +5,8 @@ export const mockUser: UserProfile = {
     username: "alexcreator",
     displayName: "Alex Creator",
     bio: "Digital Artist & Freelance Designer. Building brands that matter. 🎨✨",
-    avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1000&auto=format&fit=crop",
-    bannerUrl: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2000&auto=format&fit=crop",
+    avatarUrl: "https://res.cloudinary.com/j9iy9acr/image/upload/v1790520841/linkle/avatars/default_avatar.jpg",
+    bannerUrl: "https://res.cloudinary.com/j9iy9acr/image/upload/v1790520841/linkle/banners/default_banner.jpg",
     theme: {
         primaryColor: "#6366f1", // Indigo 500
         backgroundColor: "var(--background)",
@@ -26,9 +26,10 @@ export const mockUser: UserProfile = {
             title: "My Portfolio",
             url: "https://dribbble.com",
             description: "Check out my latest design case studies.",
-            thumbnailUrl: "https://cdn.dribbble.com/users/4859/screenshots/14626966/media/4c557989938531bf6988894236ced487.png",
+            thumbnailUrl: "https://res.cloudinary.com/j9iy9acr/image/upload/v1790520848/linkle/thumbnails/default_thumbnail.jpg",
             isVisible: true,
         },
+
         {
             id: "b2",
             title: "Design Course",
