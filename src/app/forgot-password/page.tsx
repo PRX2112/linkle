@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
             <span className="font-bold text-3xl tracking-tighter gradient-text">Linkle.</span>
           </Link>
           <h1 className="mt-4 text-2xl font-bold text-foreground">Reset your password</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Enter your email and we'll send you a link to reset your password</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Enter your email and we&apos;ll send you a link to reset your password</p>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl p-8 shadow-xl">
@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-2">Check your email</h3>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                We've sent a password reset link to <span className="font-medium text-foreground">{email}</span>.
+                We&apos;ve sent a password reset link to <span className="font-medium text-foreground">{email}</span>.
               </p>
               <Link
                 href="/login"

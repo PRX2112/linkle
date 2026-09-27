@@ -209,7 +209,12 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
 
             <BusinessSection links={user.businessLinks} theme={user.theme} />
 
-            <PaymentSection payments={user.payments} theme={user.theme} />
+            <PaymentSection
+                payments={user.payments}
+                theme={user.theme}
+                displayName={user.displayName}
+                username={user.username}
+            />
 
             <EmailCaptureSection
                 username={user.username}

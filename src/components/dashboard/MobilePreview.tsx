@@ -125,7 +125,12 @@ export default function MobilePreview() {
 
                 <BusinessSection links={user.businessLinks} theme={theme} />
 
-                <PaymentSection payments={user.payments} theme={theme} />
+                <PaymentSection
+                    payments={user.payments}
+                    theme={theme}
+                    displayName={user.displayName}
+                    username={user.username}
+                />
 
                 <EmailCaptureSection
                     username={user.username}

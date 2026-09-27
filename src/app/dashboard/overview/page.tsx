@@ -32,7 +32,7 @@ export default async function DashboardOverviewPage() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
           Welcome back, {user.displayName || user.name || "Creator"} 👋
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Here's a quick overview of your Linkle profile.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Here&apos;s a quick overview of your Linkle profile.</p>
       </div>
 
       {/* Quick Stats */}
