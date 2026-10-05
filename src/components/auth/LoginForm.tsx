@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PasswordField } from "./PasswordField";
 import { AuthError } from "./AuthError";
@@ -11,9 +11,20 @@ import { Button } from "@/components/ui/Button";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+
+  const urlError = searchParams?.get("error");
+  const initialError = urlError === "Configuration"
+    ? "Server configuration issue detected. Please ensure AUTH_SECRET and database settings are configured in Vercel."
+    : urlError === "CredentialsSignin"
+    ? "Invalid email or password."
+    : urlError
+    ? "Authentication failed. Please try again."
+    : "";
+
+  const [error, setError] = useState(initialError);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {

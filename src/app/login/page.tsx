@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
@@ -24,7 +25,9 @@ export default async function LoginPage() {
       title="Welcome back"
       subtitle="Sign in to manage your Linkle profile and track your visitor analytics."
     >
-      <LoginForm />
+      <Suspense fallback={<div className="h-48 flex items-center justify-center text-xs text-gray-400">Loading sign in...</div>}>
+        <LoginForm />
+      </Suspense>
     </AuthLayout>
   );
 }

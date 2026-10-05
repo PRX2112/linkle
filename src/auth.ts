@@ -6,12 +6,12 @@ import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  trustHost: true,
-  secret: process.env.AUTH_SECRET,
-  adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
-  providers: [
+const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || (process.env.NODE_ENV !== "production" ? "linkle-development-secret-key-32chars" : undefined);
+
+const providers: any[] = [];
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -27,53 +27,68 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: profile.email,
           image: profile.picture,
           username: uniqueUsername,
-        }
-      }
-    }),
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials")
-        }
-
-        const normalizedEmail = (credentials.email as string).trim().toLowerCase();
-
-        const user = await prisma.user.findUnique({
-          where: { email: normalizedEmail }
-        })
-
-        if (!user || !user.password) {
-          throw new Error("Invalid credentials")
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        )
-
-        if (!isPasswordValid) {
-          throw new Error("Invalid credentials")
-        }
-
-        // Generate password hash signature to detect password resets across sessions
-        const pwdSig = crypto.createHash("sha256").update(user.password).digest("hex").slice(0, 16);
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          username: user.username,
-          pwdSig,
-        } as any;
+        };
       }
     })
-  ],
+  );
+}
+
+providers.push(
+  CredentialsProvider({
+    name: "Credentials",
+    credentials: {
+      email: { label: "Email", type: "email" },
+      password: { label: "Password", type: "password" }
+    },
+    async authorize(credentials) {
+      if (!credentials?.email || !credentials?.password) {
+        throw new Error("Invalid credentials");
+      }
+
+      const normalizedEmail = (credentials.email as string).trim().toLowerCase();
+
+      const user = await prisma.user.findUnique({
+        where: { email: normalizedEmail }
+      });
+
+      if (!user || !user.password) {
+        throw new Error("Invalid credentials");
+      }
+
+      const isPasswordValid = await bcrypt.compare(
+        credentials.password as string,
+        user.password
+      );
+
+      if (!isPasswordValid) {
+        throw new Error("Invalid credentials");
+      }
+
+      // Generate password hash signature to detect password resets across sessions
+      const pwdSig = crypto.createHash("sha256").update(user.password).digest("hex").slice(0, 16);
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        image: user.image,
+        username: user.username,
+        pwdSig,
+      } as any;
+    }
+  })
+);
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
+  secret,
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" },
+  providers,
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
@@ -124,9 +139,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session
     }
-  },
-  pages: {
-    signIn: "/login",
   }
 })
 
