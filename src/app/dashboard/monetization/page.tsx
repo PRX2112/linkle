@@ -1,182 +1,262 @@
 "use client";
 
-import { useState } from "react";
-import { CircleDollarSign, Check, ExternalLink, Zap, Flame, Crown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
+import { CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { CurrentPlanHero } from "@/components/dashboard/billing/CurrentPlanHero";
+import { EntitlementsUsageSection } from "@/components/dashboard/billing/EntitlementsUsageSection";
+import { PaymentMethodSection } from "@/components/dashboard/billing/PaymentMethodSection";
+import { BillingHistorySection } from "@/components/dashboard/billing/BillingHistorySection";
+import { UpgradePlansSection } from "@/components/dashboard/billing/UpgradePlansSection";
+import { EntitlementMatrix, ENTITLEMENTS } from "@/lib/billing/entitlements";
+import { BillingInterval } from "@/lib/billing/plans";
+
+interface SubscriptionPayload {
+  plan: string;
+  rawPlan: string;
+  status: string;
+  isPaidActive: boolean;
+  interval: string;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  hasSubscription: boolean;
+  entitlements: EntitlementMatrix;
+  usage?: {
+    links: {
+      used: number;
+      maxAllowed: number;
+    };
+  };
+  paymentMethod?: {
+    brand: string;
+    last4: string;
+    expMonth: number;
+    expYear: number;
+  } | null;
+  invoices?: Array<{
+    id: string;
+    number: string | null;
+    amount: number;
+    currency: string;
+    status: string | null;
+    date: string;
+    pdfUrl: string | null;
+    hostedUrl: string | null;
+  }>;
+}
 
 export default function MonetizationPage() {
-  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
+  const searchParams = useSearchParams();
+  const upgradeSectionRef = useRef<HTMLDivElement>(null);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [subData, setSubData] = useState<SubscriptionPayload | null>(null);
+
+  const [portalLoading, setPortalLoading] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
-  const [successUpgrade, setSuccessUpgrade] = useState(false);
+  const [actionError, setActionError] = useState("");
 
-  const plans = [
-    {
-      name: "Starter",
-      badge: "Free Forever",
-      icon: <Zap className="w-5 h-5 text-purple-500" />,
-      desc: "Perfect for starting your digital identity.",
-      price: { monthly: 0, yearly: 0 },
-      features: [
-        "Up to 5 social and link blocks",
-        "Standard bio theme customization",
-        "Basic static page analytics",
-        "Linkle branding on profile",
-      ],
-      cta: "Current Plan",
-      featured: false,
-    },
-    {
-      name: "Pro",
-      badge: "Most Popular",
-      icon: <Flame className="w-5 h-5 text-amber-500" />,
-      desc: "Elevate your brand with premium tools.",
-      price: { monthly: 9, yearly: 79 },
-      features: [
-        "Unlimited social & link blocks",
-        "Real-time geolocation analytics",
-        "Google & custom domain support",
-        "Remove Linkle watermark/branding",
-        "Stripe & payment gateway access",
-        "Priority 24/7 support",
-      ],
-      cta: "Upgrade to Pro",
-      featured: true,
-    },
-    {
-      name: "Enterprise",
-      badge: "Best Value",
-      icon: <Crown className="w-5 h-5 text-indigo-500" />,
-      desc: "Maximum power for large scale creators.",
-      price: { monthly: 29, yearly: 249 },
-      features: [
-        "Everything in Pro plan",
-        "Unlimited custom domains",
-        "Custom branding & white labeling",
-        "Dedicated account strategist",
-        "API access & custom analytics logs",
-      ],
-      cta: "Contact Sales",
-      featured: false,
-    },
-  ];
+  const isSuccess = searchParams?.get("success") === "true";
+  const isCanceled = searchParams?.get("canceled") === "true";
 
-  const handleUpgrade = (planName: string) => {
-    if (planName === "Starter") return;
+  const fetchSubscription = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch("/api/billing/subscription");
+      if (!res.ok) {
+        throw new Error("Unable to retrieve subscription information.");
+      }
+      const data: SubscriptionPayload = await res.json();
+      setSubData(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to load billing status.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubscription();
+  }, []);
+
+  const handleOpenPortal = async () => {
+    setPortalLoading(true);
+    setActionError("");
+
+    try {
+      const res = await fetch("/api/billing/portal", {
+        method: "POST",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "We couldn't open subscription management.");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("Missing portal redirect link.");
+      }
+    } catch (err: any) {
+      setActionError(err.message || "Unable to launch Customer Portal. Please try again.");
+      setPortalLoading(false);
+    }
+  };
+
+  const handleUpgrade = async (planName: string, interval: BillingInterval) => {
     setUpgradingPlan(planName);
-    setTimeout(() => {
+    setActionError("");
+
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: planName,
+          interval,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to initialize checkout.");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("Missing checkout destination URL.");
+      }
+    } catch (err: any) {
+      setActionError(err.message || "Checkout could not be initialized.");
       setUpgradingPlan(null);
-      setSuccessUpgrade(true);
-      setTimeout(() => setSuccessUpgrade(false), 5000);
-    }, 1500);
+    }
+  };
+
+  const scrollToUpgrade = () => {
+    upgradeSectionRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight sm:text-5xl">
-          Empower Your Profile
+    <div className="max-w-4xl space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+          Billing & Plans
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-lg mt-3 max-w-xl mx-auto">
-          Unlock premium branding, custom domains, and real-time deep-dive analytics to scale your audience.
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Manage your subscription, entitlements, and payment details.
         </p>
-
-        {/* Billing Period Toggle */}
-        <div className="mt-8 flex justify-center items-center gap-3">
-          <span className={`text-sm font-medium ${billingPeriod === "monthly" ? "text-gray-900 dark:text-white" : "text-gray-400"}`}>Monthly</span>
-          <button
-            onClick={() => setBillingPeriod(p => p === "monthly" ? "yearly" : "monthly")}
-            className="relative inline-flex h-6 w-11 items-center rounded-full bg-purple-600 transition-colors focus:outline-none"
-          >
-            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${billingPeriod === "yearly" ? "translate-x-6" : "translate-x-1"}`} />
-          </button>
-          <span className={`text-sm font-medium flex items-center gap-1.5 ${billingPeriod === "yearly" ? "text-gray-900 dark:text-white" : "text-gray-400"}`}>
-            Yearly
-            <span className="px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider">
-              Save 25%
-            </span>
-          </span>
-        </div>
       </div>
 
-      {successUpgrade && (
-        <div className="mb-8 p-4 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-sm text-center animate-in fade-in zoom-in duration-300">
-          🎉 <strong>Upgrade Successful!</strong> Thank you for scaling with Linkle. Your pro features are now active.
+      {/* Return from Stripe Checkout feedback banners */}
+      {isSuccess && (
+        <div className="p-4 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 text-xs font-medium flex items-center gap-2.5 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>
+            Subscription updated successfully! Your premium features and elevated limits are now active.
+          </span>
         </div>
       )}
 
-      {/* Pricing Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-        {plans.map((p) => (
-          <div
-            key={p.name}
-            className={`relative flex flex-col justify-between p-8 rounded-3xl border transition-all ${
-              p.featured
-                ? "bg-gradient-to-b from-purple-500/5 to-indigo-500/5 dark:from-purple-900/10 dark:to-indigo-900/10 border-purple-500 dark:border-purple-600 shadow-xl scale-[1.03] md:-translate-y-2"
-                : "bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:border-gray-200 dark:hover:border-zinc-700"
-            }`}
-          >
-            {p.featured && (
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full gradient-bg text-white text-[10px] font-extrabold uppercase tracking-widest shadow-md">
-                {p.badge}
-              </span>
-            )}
-
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-gray-50 dark:bg-zinc-800/80 shadow-inner`}>
-                  {p.icon}
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{p.name}</h3>
-                  {!p.featured && <span className="text-[10px] text-gray-400 font-semibold uppercase">{p.badge}</span>}
-                </div>
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{p.desc}</p>
-
-              <div className="my-6">
-                <span className="text-4xl font-extrabold text-gray-900 dark:text-white">
-                  ${billingPeriod === "monthly" ? p.price.monthly : Math.round(p.price.yearly / 12)}
-                </span>
-                <span className="text-gray-400 text-sm"> / month</span>
-                {billingPeriod === "yearly" && p.price.yearly > 0 && (
-                  <p className="text-xs text-green-500 font-semibold mt-1">Billed annually (${p.price.yearly})</p>
-                )}
-              </div>
-
-              <ul className="space-y-3.5 mb-8">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300">
-                    <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <button
-              onClick={() => handleUpgrade(p.name)}
-              disabled={p.name === "Starter" || upgradingPlan !== null}
-              className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-all ${
-                p.name === "Starter"
-                  ? "bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 cursor-default"
-                  : p.featured
-                  ? "gradient-bg text-white hover:opacity-90 hover:scale-[1.02] shadow-glow"
-                  : "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 hover:scale-[1.02]"
-              }`}
-            >
-              {upgradingPlan === p.name ? "Processing..." : p.cta}
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Stripe Notice */}
-      <div className="mt-16 text-center text-xs text-gray-400 dark:text-gray-500 flex flex-col items-center justify-center gap-2">
-        <div className="flex items-center gap-2">
-          <CircleDollarSign className="w-4 h-4 text-purple-500" />
-          <span>Transactions secured by <strong>Stripe Checkout</strong></span>
+      {isCanceled && (
+        <div className="p-4 rounded-xl bg-gray-50 dark:bg-zinc-850 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-300 text-xs font-medium flex items-center gap-2.5 animate-in fade-in">
+          <AlertCircle className="w-4 h-4 shrink-0 text-gray-500" />
+          <span>Checkout was canceled. No charges were made to your account.</span>
         </div>
-        <p className="max-w-md">Payments are made securely under SSL. Cancel subscription at any time instantly from Settings.</p>
-      </div>
+      )}
+
+      {actionError && (
+        <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs font-medium flex items-center gap-2.5 animate-in fade-in">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{actionError}</span>
+        </div>
+      )}
+
+      {/* Loading Skeleton */}
+      {loading ? (
+        <div className="space-y-6 animate-pulse">
+          <div className="h-44 rounded-xl bg-gray-100 dark:bg-zinc-800" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-48 rounded-xl bg-gray-100 dark:bg-zinc-800" />
+            <div className="md:col-span-2 h-48 rounded-xl bg-gray-100 dark:bg-zinc-800" />
+          </div>
+          <div className="h-64 rounded-xl bg-gray-100 dark:bg-zinc-800" />
+        </div>
+      ) : error ? (
+        /* Error State */
+        <div className="rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 text-center space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {error}
+          </p>
+          <button
+            type="button"
+            onClick={fetchSubscription}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Try again</span>
+          </button>
+        </div>
+      ) : subData ? (
+        <>
+          {/* Current Plan Hero */}
+          <section aria-labelledby="current-plan-heading">
+            <CurrentPlanHero
+              plan={subData.plan}
+              status={subData.status}
+              isPaidActive={subData.isPaidActive}
+              interval={subData.interval}
+              currentPeriodEnd={subData.currentPeriodEnd}
+              cancelAtPeriodEnd={subData.cancelAtPeriodEnd}
+              onManagePortal={handleOpenPortal}
+              portalLoading={portalLoading}
+              onUpgradeClick={scrollToUpgrade}
+            />
+          </section>
+
+          {/* Usage & Entitlements Section */}
+          <section aria-labelledby="entitlements-heading">
+            <EntitlementsUsageSection
+              plan={subData.plan}
+              entitlements={subData.entitlements || ENTITLEMENTS.STARTER}
+              usage={subData.usage}
+              onUpgradeClick={scrollToUpgrade}
+            />
+          </section>
+
+          {/* Payment Method (rendered only if real card data is available) */}
+          {subData.paymentMethod && (
+            <section aria-labelledby="payment-method-heading">
+              <PaymentMethodSection
+                paymentMethod={subData.paymentMethod}
+                onManagePortal={handleOpenPortal}
+                portalLoading={portalLoading}
+              />
+            </section>
+          )}
+
+          {/* Billing History / Invoices */}
+          {(subData.isPaidActive || (subData.invoices && subData.invoices.length > 0)) && (
+            <section aria-labelledby="invoices-heading">
+              <BillingHistorySection invoices={subData.invoices || []} />
+            </section>
+          )}
+
+          {/* Upgrade & Plan Comparison Section */}
+          <section ref={upgradeSectionRef} aria-labelledby="plans-heading" className="pt-2">
+            <UpgradePlansSection
+              currentPlan={subData.plan}
+              isPaidActive={subData.isPaidActive}
+              onUpgrade={handleUpgrade}
+              upgradingPlan={upgradingPlan}
+            />
+          </section>
+        </>
+      ) : null}
     </div>
   );
 }

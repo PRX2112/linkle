@@ -2,14 +2,19 @@
 
 import { QRCodeSVG } from "qrcode.react";
 import { Download } from "lucide-react";
+import { tracker } from "@/lib/analytics/tracker";
 
 interface QRGeneratorProps {
     url: string;
     size?: number;
+    userId?: string;
 }
 
-export default function QRGenerator({ url, size = 200 }: QRGeneratorProps) {
+export default function QRGenerator({ url, size = 200, userId }: QRGeneratorProps) {
     const downloadQR = () => {
+        if (userId) {
+            tracker.qrDownload(userId, "profile_qr");
+        }
         const svg = document.getElementById("profile-qr-code");
         if (!svg) return;
         const svgData = new XMLSerializer().serializeToString(svg);

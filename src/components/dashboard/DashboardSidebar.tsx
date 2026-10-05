@@ -1,180 +1,274 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, LayoutGrid, Palette, ExternalLink, LogOut, QrCode, LayoutDashboard, Link as LinkIcon, BarChart3, CircleDollarSign, Settings } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Sparkles,
+  ExternalLink,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { DASHBOARD_NAV_GROUPS, DashboardNavItem } from "@/lib/dashboard-nav";
+import { UserMenu } from "./UserMenu";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { Badge } from "@/components/ui/Badge";
 
-interface User {
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-  username?: string | null;
+interface DashboardSidebarProps {
+  user: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    username?: string | null;
+    displayName?: string | null;
+    plan?: string | null;
+    subscription?: any | null;
+  };
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
-const navItems = [
-  { label: "Dashboard", href: "/dashboard/overview", icon: LayoutDashboard },
-  { label: "My Links", href: "/dashboard", icon: LinkIcon },
-  { label: "Appearance", href: "/dashboard/appearance", icon: Palette },
-  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
-];
-
-export default function DashboardSidebar({ user }: { user: User }) {
+export default function DashboardSidebar({
+  user,
+  isCollapsed = false,
+  onToggleCollapse,
+  isMobileOpen = false,
+  onCloseMobile,
+}: DashboardSidebarProps) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
 
-  const renderSidebarContent = (onLinkClick?: () => void) => (
-    <>
-      {/* Logo */}
-      <div className="mb-8 px-2 flex items-center justify-between">
-        <Link href="/" onClick={onLinkClick} className="flex items-center gap-2.5 group">
-          <div className="relative w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105">
-            <Image src="/logo.png" alt="Linkle Logo" width={32} height={32} className="object-contain" priority />
-          </div>
-          <span className="font-bold text-2xl tracking-tighter gradient-text">Linkle.</span>
-        </Link>
-        {onLinkClick && (
-          <button
-            onClick={onLinkClick}
-            className="p-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800 lg:hidden"
-          >
-            <X className="w-5 h-5" />
-          </button>
+  const rawPlan = (user.plan || "STARTER").toUpperCase();
+  const isPaid = rawPlan === "PRO" || rawPlan === "ENTERPRISE";
+
+  const renderNavItem = (item: DashboardNavItem, inMobile = false) => {
+    const isActive = item.exact
+      ? pathname === item.href
+      : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+    const Icon = item.icon;
+
+    const linkContent = (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={onCloseMobile}
+        aria-current={isActive ? "page" : undefined}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-150 select-none group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30",
+          inMobile && "min-h-[40px]",
+          isCollapsed && !inMobile && "justify-center px-0 h-10 w-10 mx-auto",
+          isActive
+            ? "bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 font-semibold"
+            : "text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 hover:bg-gray-100/80 dark:hover:bg-zinc-800/60 font-medium"
         )}
-      </div>
+      >
+        {/* Left active border indicator (when not collapsed or in mobile) */}
+        {isActive && (!isCollapsed || inMobile) && (
+          <span
+            className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-brand-600 dark:bg-brand-500 rounded-r-full"
+            aria-hidden="true"
+          />
+        )}
 
-      {/* User info */}
-      <div className="mb-6 px-2 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800">
-        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500/40 flex items-center justify-center bg-gray-200 text-gray-600 font-bold text-lg mb-2">
-          {user.image ? (
-            <img src={user.image} alt="User avatar" className="w-full h-full object-cover" />
-          ) : (
-            (() => {
-              const parts = (user.name ?? user.username ?? "?").trim().split(/\s+/);
-              if (parts.length === 1) {
-                return parts[0][0].toUpperCase();
-              }
-              return (parts[0][0] + parts[1][0]).toUpperCase();
-            })()
+        <Icon
+          className={cn(
+            "w-4 h-4 shrink-0 transition-colors",
+            isActive
+              ? "text-brand-600 dark:text-brand-400"
+              : "text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200"
+          )}
+        />
+
+        {(!isCollapsed || inMobile) && (
+          <span className="truncate">{item.label}</span>
+        )}
+      </Link>
+    );
+
+    // If collapsed desktop, wrap in Tooltip for accessibility
+    if (isCollapsed && !inMobile) {
+      return (
+        <Tooltip key={item.href} content={item.label} position="right">
+          {linkContent}
+        </Tooltip>
+      );
+    }
+
+    return linkContent;
+  };
+
+  const sidebarContent = (inMobile = false) => (
+    <div className="flex flex-col h-full justify-between">
+      {/* Top Header & Brand */}
+      <div>
+        <div
+          className={cn(
+            "flex items-center justify-between pb-6 pt-1 border-b border-gray-100 dark:border-zinc-800/80 mb-5",
+            isCollapsed && !inMobile ? "px-1 justify-center" : "px-3"
+          )}
+        >
+          <Link
+            href="/"
+            onClick={onCloseMobile}
+            className="flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 rounded-lg p-0.5"
+          >
+            <div className="relative w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0 border border-gray-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-subtle group-hover:border-brand-300 transition-colors">
+              <Image
+                src="/logo.png"
+                alt="Linkle"
+                width={26}
+                height={26}
+                className="object-contain"
+                priority
+              />
+            </div>
+            {(!isCollapsed || inMobile) && (
+              <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">
+                Linkle<span className="text-brand-600 dark:text-brand-400">.</span>
+              </span>
+            )}
+          </Link>
+
+          {/* Desktop Collapse Toggle */}
+          {!inMobile && onToggleCollapse && (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className={cn(
+                "p-1.5 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30",
+                isCollapsed && "hidden"
+              )}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Mobile Close Button */}
+          {inMobile && onCloseMobile && (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              aria-label="Close navigation"
+              className="min-w-[38px] min-h-[38px] p-2 rounded-lg text-gray-500 hover:text-gray-800 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center shrink-0"
+            >
+              <X className="w-5 h-5" />
+            </button>
           )}
         </div>
-        <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.name}</div>
-        {user.username && (
-          <div className="text-xs text-gray-400 truncate">@{user.username}</div>
-        )}
-      </div>
 
-      {/* Nav */}
-      <nav className="flex-1 space-y-1">
-        {navItems.map(({ label, href, icon: Icon }) => {
-          const isActive = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onLinkClick}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                isActive
-                  ? "gradient-bg text-white shadow-glow"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800"
-              }`}
+        {/* Collapsed Expand Trigger */}
+        {!inMobile && isCollapsed && onToggleCollapse && (
+          <div className="flex justify-center mb-4">
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              aria-label="Expand sidebar"
+              className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30"
             >
-              <Icon className="w-4 h-4" />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Footer actions */}
-      <div className="space-y-1 mt-4 pt-4 border-t border-gray-200 dark:border-zinc-800">
-        {user.username && (
-          <Link
-            href={`/p/${user.username}`}
-            target="_blank"
-            onClick={onLinkClick}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
-          >
-            <ExternalLink className="w-4 h-4" />
-            View my Linkle
-          </Link>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         )}
-        <button
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+
+        {/* Navigation Sections */}
+        <nav
+          className="space-y-6 px-1"
+          aria-label="Sidebar Navigation"
         >
-          <LogOut className="w-4 h-4" />
-          Sign out
-        </button>
+          {DASHBOARD_NAV_GROUPS.map((group) => (
+            <div key={group.id} className="space-y-1">
+              {(!isCollapsed || inMobile) ? (
+                <div className="px-3 pb-1.5 text-[11px] font-semibold tracking-wider text-gray-400 dark:text-zinc-500 uppercase">
+                  {group.label}
+                </div>
+              ) : (
+                <div className="h-px bg-gray-200 dark:bg-zinc-800 my-2 mx-2" />
+              )}
+
+              <div className="space-y-0.5">
+                {group.items.map((item) => renderNavItem(item, inMobile))}
+              </div>
+            </div>
+          ))}
+        </nav>
       </div>
-    </>
+
+      {/* Bottom Section */}
+      <div className="pt-4 border-t border-gray-100 dark:border-zinc-800/80 px-1 space-y-3">
+        {/* Compact Plan Card (Hidden in collapsed desktop) */}
+        {(!isCollapsed || inMobile) && (
+          <div className="p-3 rounded-xl bg-gray-50 dark:bg-zinc-850 border border-gray-200/70 dark:border-zinc-800/80 text-xs">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {isPaid ? `${rawPlan} Plan` : "Starter Plan"}
+              </span>
+              <Badge variant={isPaid ? "brand" : "default"} size="sm">
+                {isPaid ? "Active" : "Free"}
+              </Badge>
+            </div>
+            <p className="text-gray-500 dark:text-zinc-400 text-[11px] leading-relaxed">
+              {isPaid
+                ? "All premium features & unlimited links unlocked."
+                : "Limited to 5 links & 7-day analytics."}
+            </p>
+            {!isPaid && (
+              <Link
+                href="/dashboard/monetization"
+                onClick={onCloseMobile}
+                className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
+              >
+                <Sparkles className="w-3 h-3" />
+                Upgrade for unlimited & Pro tools &rarr;
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* User Account / Profile Menu */}
+        <UserMenu user={user} isCollapsed={isCollapsed && !inMobile} />
+      </div>
+    </div>
   );
 
   return (
     <>
-      {/* Mobile Sticky Navbar Header */}
-      <header className="lg:hidden w-full h-16 fixed top-0 left-0 right-0 z-40 bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-4 flex items-center justify-between shadow-sm">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="relative w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center">
-            <Image src="/logo.png" alt="Linkle Logo" width={28} height={28} className="object-contain" priority />
-          </div>
-          <span className="font-bold text-2xl tracking-tighter gradient-text">Linkle.</span>
-        </Link>
-        
-        <div className="flex items-center gap-3">
-          {user.username && (
-            <Link
-              href={`/p/${user.username}`}
-              target="_blank"
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition"
-            >
-              Live Site
-            </Link>
-          )}
-          <button
-            onClick={() => setIsOpen(true)}
-            className="p-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
-            aria-label="Open menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+      {/* Mobile Drawer (Only mounted/active on mobile) */}
+      {isMobileOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 lg:hidden flex"
+        >
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200"
+            onClick={onCloseMobile}
+            aria-hidden="true"
+          />
+
+          {/* Drawer panel */}
+          <aside className="relative w-72 max-w-[85vw] h-full bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 shadow-modal flex flex-col p-4 pb-safe z-10 animate-in slide-in-from-left duration-200">
+            {sidebarContent(true)}
+          </aside>
         </div>
-      </header>
-
-      {/* Mobile Drawer (Overlay and Menu) */}
-      <AnimatePresence>
-        {isOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex">
-            {/* Backdrop Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-            />
-
-            {/* Menu Content Drawer */}
-            <motion.aside
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-64 max-w-[280px] h-full bg-white dark:bg-zinc-900 flex flex-col p-4 shadow-2xl z-50"
-            >
-              {renderSidebarContent(() => setIsOpen(false))}
-            </motion.aside>
-          </div>
-        )}
-      </AnimatePresence>
+      )}
 
       {/* Desktop Sidebar (Permanent) */}
-      <aside className="w-64 min-h-screen bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 flex-col p-4 sticky top-0 hidden lg:flex shrink-0">
-        {renderSidebarContent()}
+      <aside
+        className={cn(
+          "hidden lg:flex flex-col bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 sticky top-0 h-screen shrink-0 transition-all duration-200 ease-in-out z-30 p-3",
+          isCollapsed ? "w-[72px]" : "w-64"
+        )}
+      >
+        {sidebarContent(false)}
       </aside>
     </>
   );

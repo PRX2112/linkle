@@ -11,8 +11,20 @@ interface QRCodeModalProps {
 }
 
 export default function QRCodeModal({ username, displayName, onClose }: QRCodeModalProps) {
-  const profileUrl = `${typeof window !== "undefined" ? window.location.origin : "https://linkle.me"}/p/${username}`;
+  const appBase = typeof window !== "undefined" && window.location.origin
+    ? window.location.origin
+    : (process.env.NEXT_PUBLIC_APP_URL || "https://linkle.app");
+  const cleanUsername = username.trim().toLowerCase();
+  const profileUrl = `${appBase}/p/${cleanUsername}`;
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   const handleDownload = () => {
     const svg = document.getElementById("qr-code-svg");
@@ -32,28 +44,34 @@ export default function QRCodeModal({ username, displayName, onClose }: QRCodeMo
       ctx.drawImage(img, 20, 20, size - 40, size - 40);
       const a = document.createElement("a");
       a.href = canvas.toDataURL("image/png");
-      a.download = `${username}-linkle-qr.png`;
+      a.download = `${cleanUsername}-linkle-qr.png`;
       a.click();
     };
     img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl p-8 w-full max-w-sm mx-4 relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="qr-modal-title"
+        className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl p-6 sm:p-8 w-full max-w-sm relative max-h-[calc(100dvh-2rem)] overflow-y-auto"
+      >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          aria-label="Close QR Code dialog"
+          className="absolute top-4 right-4 p-2 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center text-white">
+          <div className="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center text-white shrink-0">
             <QrCode className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">QR Code</h2>
+            <h2 id="qr-modal-title" className="text-lg font-bold text-gray-900 dark:text-white">QR Code</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">Share your profile instantly</p>
           </div>
         </div>

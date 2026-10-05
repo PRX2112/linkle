@@ -31,6 +31,9 @@ export async function POST(request: Request) {
       request.headers.get("cf-ipcountry") ||
       "Unknown";
 
+    const { extractUtmParams } = await import("@/lib/utm");
+    const utm = extractUtmParams(url);
+
     // Defer the database insert to run asynchronously after response is sent
     after(async () => {
       if (isOwner) return;
@@ -45,6 +48,32 @@ export async function POST(request: Request) {
             referrer: referrer || "Direct",
             device,
             country,
+          },
+        });
+
+        await prisma.analyticsEvent.create({
+          data: {
+            userId,
+            eventType: linkType === "contact" ? "CONTACT_SAVE" : "LINK_CLICK",
+            targetId: linkId,
+            targetType: linkType,
+            targetTitle: linkTitle || linkType,
+            url: url || "",
+            referrer: referrer || "Direct",
+            device,
+            country,
+            utmSource: utm.utmSource || null,
+            utmMedium: utm.utmMedium || null,
+            utmCampaign: utm.utmCampaign || null,
+            utmContent: utm.utmContent || null,
+            utmTerm: utm.utmTerm || null,
+            metadata: utm.utmEnabled ? {
+              ...(utm.utmSource ? { utm_source: utm.utmSource } : {}),
+              ...(utm.utmMedium ? { utm_medium: utm.utmMedium } : {}),
+              ...(utm.utmCampaign ? { utm_campaign: utm.utmCampaign } : {}),
+              ...(utm.utmContent ? { utm_content: utm.utmContent } : {}),
+              ...(utm.utmTerm ? { utm_term: utm.utmTerm } : {}),
+            } : undefined,
           },
         });
       } catch (err) {

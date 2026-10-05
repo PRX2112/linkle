@@ -58,6 +58,19 @@ export async function POST(request: Request) {
             country,
           },
         });
+
+        await prisma.analyticsEvent.create({
+          data: {
+            userId: user.id,
+            eventType: "PROFILE_VIEW",
+            visitorId: visitorId || null,
+            targetType: "profile",
+            targetTitle: user.username,
+            referrer: referrer || "Direct",
+            device,
+            country,
+          },
+        });
       } catch (err) {
         console.error("Delayed analytics view tracking failed:", err);
       }

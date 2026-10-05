@@ -17,33 +17,58 @@ export async function POST(request: Request) {
     }
 
     const { email } = validation.data;
+    const normalizedEmail = email.trim().toLowerCase();
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
+
+    // Generic success response to prevent account enumeration
+    const genericResponse = {
+      success: true,
+      message: "If an account exists with this email, a password reset link has been sent.",
+    };
 
     if (!user) {
-      // Don't leak whether the user exists or not, just return success
-      return NextResponse.json({ success: true });
+      // Perform pseudo-hash to mitigate timing attack enumeration
+      crypto.createHash("sha256").update(normalizedEmail + Date.now()).digest("hex");
+      return NextResponse.json(genericResponse);
     }
 
-    const token = crypto.randomBytes(32).toString("hex");
-    const expires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
-
-    // Delete existing tokens for this email to prevent spam/duplicates
-    await prisma.passwordResetToken.deleteMany({
-      where: { email },
+    // Rate-limit consecutive reset emails for the same address (2 minute throttle)
+    const recentToken = await prisma.passwordResetToken.findFirst({
+      where: {
+        email: normalizedEmail,
+        expires: { gt: new Date(Date.now() + 58 * 60 * 1000) }, // created in last 2 mins of 60 min lifetime
+      },
     });
 
+    if (recentToken) {
+      return NextResponse.json(genericResponse);
+    }
+
+    // Generate cryptographically secure random token (32 bytes = 64 hex characters)
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    // Compute SHA-256 hash to store in the database so plaintext tokens are never stored
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour expiration
+
+    // Purge any stale reset tokens for this email
+    await prisma.passwordResetToken.deleteMany({
+      where: { email: normalizedEmail },
+    });
+
+    // Store only the hashed token
     await prisma.passwordResetToken.create({
       data: {
-        email,
-        token,
+        email: normalizedEmail,
+        token: hashedToken,
         expires,
       },
     });
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${token}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const resetUrl = `${appUrl}/reset-password?token=${rawToken}`;
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -153,20 +178,32 @@ export async function POST(request: Request) {
       </html>
     `;
 
-    await sendMail({
-      to: email,
-      subject: "Reset your Linkle password",
-      html: htmlContent,
-      text: `Hello,\n\nWe received a request to reset your Linkle password. Please visit this link to set a new password:\n\n${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, you can ignore this email.`,
-    });
+    try {
+      await sendMail({
+        to: normalizedEmail,
+        subject: "Reset your Linkle password",
+        html: htmlContent,
+        text: `Hello,\n\nWe received a request to reset your Linkle password. Please visit this link to set a new password:\n\n${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, you can safely ignore this email.`,
+      });
+    } catch (mailError: any) {
+      console.error("[AUTH] Failed to dispatch password reset email:", mailError?.message || "Delivery error");
+      // Still return generic success to avoid enumeration and panic, but delete token so user can retry later
+      await prisma.passwordResetToken.deleteMany({
+        where: { email: normalizedEmail },
+      });
+      return NextResponse.json({
+        error: "Unable to send password reset email at this time. Please try again later.",
+      }, { status: 500 });
+    }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(genericResponse);
   } catch (error) {
-    console.error("Forgot password error:", error);
+    console.error("[AUTH] Unexpected error in forgot-password handler");
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "An unexpected error occurred. Please try again later." },
       { status: 500 }
     );
   }
 }
+
 

@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -37,11 +38,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing credentials")
+          throw new Error("Invalid credentials")
         }
 
+        const normalizedEmail = (credentials.email as string).trim().toLowerCase();
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string }
+          where: { email: normalizedEmail }
         })
 
         if (!user || !user.password) {
@@ -57,13 +60,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Invalid credentials")
         }
 
+        // Generate password hash signature to detect password resets across sessions
+        const pwdSig = crypto.createHash("sha256").update(user.password).digest("hex").slice(0, 16);
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           image: user.image,
           username: user.username,
-        }
+          pwdSig,
+        } as any;
       }
     })
   ],
@@ -71,15 +78,47 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id
-        token.username = user.username
+        token.username = (user as any).username
+        if ((user as any).pwdSig) {
+          token.pwdSig = (user as any).pwdSig
+        }
       }
+
       if (trigger === "update" && session?.username) {
         token.username = session.username
       }
+
+      // Invalidate active session if user has a password signature and their password has changed or account deleted
+      if (token.id && token.pwdSig) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { password: true, username: true }
+        });
+
+        // Account was deleted or has no password
+        if (!dbUser || !dbUser.password) {
+          return null as any;
+        }
+
+        const currentSig = crypto.createHash("sha256").update(dbUser.password).digest("hex").slice(0, 16);
+        // Password was changed or reset -> immediately invalidate session
+        if (token.pwdSig !== currentSig) {
+          return null as any;
+        }
+
+        // Keep username synchronized if updated
+        if (dbUser.username && token.username !== dbUser.username) {
+          token.username = dbUser.username;
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
-      if (token && session.user) {
+      if (!token || !token.id) {
+        return null as any;
+      }
+      if (session.user) {
         session.user.id = token.id as string
         session.user.username = token.username as string | undefined
       }
@@ -90,3 +129,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   }
 })
+

@@ -43,6 +43,21 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    try {
+      await prisma.analyticsEvent.create({
+        data: {
+          userId: user.id,
+          eventType: "EMAIL_SUBSCRIBE",
+          targetType: "email_capture",
+          targetTitle: "Newsletter",
+          referrer: req.headers.get("referer") || "Direct",
+          country: req.headers.get("x-vercel-ip-country") || req.headers.get("cf-ipcountry") || "Unknown",
+        }
+      });
+    } catch (e) {
+      console.error("Failed to log EMAIL_SUBSCRIBE analytics:", e);
+    }
+
     return NextResponse.json({ success: true, subscription }, { status: 201 });
   } catch (error) {
     console.error("Failed to subscribe email:", error);

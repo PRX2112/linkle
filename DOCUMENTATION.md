@@ -9,6 +9,19 @@
 
 1. [Project Overview](#1-project-overview)
 2. [Features](#2-features)
+   - [2.1 Authentication](#21-authentication)
+   - [2.2 Public Profile Page](#22-public-profile-page-pusername)
+   - [2.3 Dashboard — Links Manager](#23-dashboard--links-manager)
+   - [2.4 Dashboard — Appearance](#24-dashboard--appearance)
+   - [2.5 Dashboard — Analytics](#25-dashboard--analytics)
+   - [2.6 Dashboard — Live Preview Panel](#26-dashboard--live-preview-panel)
+   - [2.7 Dashboard — Monetization & Settings](#27-dashboard--monetization--settings)
+   - [2.8 QR Code](#28-qr-code)
+   - [2.9 Email Capture](#29-email-capture)
+   - [2.10 Cloudinary Photo Upload & Compression](#210-cloudinary-photo-upload--in-browser-compression-engine)
+   - [2.11 Linkle Pay: Dynamic UPI "Pay Me" & QR Intent](#211-linkle-pay-dynamic-upi-pay-me--qr-intent-engine)
+   - [2.12 Upstash Redis Rate Limiting](#212-upstash-redis-rate-limiting)
+   - [2.13 Tag-Based Edge Caching & On-Demand Revalidation](#213-tag-based-edge-caching--on-demand-revalidation)
 3. [Tech Stack](#3-tech-stack)
 4. [Architecture](#4-architecture)
 5. [Database Schema](#5-database-schema)
@@ -57,13 +70,19 @@ Users manage everything from a polished dashboard that features a live **mobile/
 |---|---|
 | Profile header (avatar, banner, display name, bio, username) | ✅ Done |
 | Social links section with platform icons | ✅ Done |
-| Business / custom link blocks | ✅ Done |
-| Payment methods section (UPI, PayPal, Stripe, Crypto…) | ✅ Done |
+| Business / custom link blocks with thumbnail images | ✅ Done |
+| Payment methods section with Linkle Pay (Dynamic UPI "Pay Me" modal with verified QR, deep link, PNG download + PayPal, Stripe, Crypto...) | ✅ Done |
 | Location section with embedded Google Maps | ✅ Done |
 | Contact actions section | ✅ Done |
 | Email capture / newsletter subscribe widget | ✅ Done |
 | Scheduled link filtering (startDate / endDate enforced server-side) | ✅ Done |
-| Dynamic Open Graph metadata per profile | ✅ Done |
+| Dynamic SEO metadata (Title, Description, Canonical URL, Robots) | ✅ Done |
+| Dynamic 1200x630 Open Graph image generator (`next/og` ImageResponse) | ✅ Done |
+| Twitter / X Cards (`summary_large_image`) | ✅ Done |
+| Schema.org JSON-LD Structured Data (`ProfilePage`, `Person`/`Organization`, `sameAs`) | ✅ Done |
+| Robots Directives (`/robots.txt`) with strict bot rules | ✅ Done |
+| Scalable Dynamic XML Sitemap (`/sitemap.xml`, 50k capacity, private data excluded) | ✅ Done |
+| Web Application Manifest (`/manifest.webmanifest`) & Multi-Resolution App Icons | ✅ Done |
 | Animated gradient background (themed to user's primary color) | ✅ Done |
 | "Powered by Linkle" footer badge | ✅ Done |
 | Demo profile at `/p/demo` | ✅ Done |
@@ -77,6 +96,7 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | Per-link click counter (real data from ClickEvent DB) | ✅ Done |
 | Pin a link as "Featured" | ✅ Done (schema + UI) |
 | QR code modal (downloadable) | ✅ Done |
+| Business link thumbnail photo upload with client-side compression | ✅ Done |
 | Email capture settings & subscriber list (Tools tab) | ✅ Done |
 | Link edit in-place (LinkEditModal) | ✅ Done |
 | Scheduled links (set start/end dates per link) | ✅ Done (schema + UI + server enforcement) |
@@ -84,7 +104,7 @@ Users manage everything from a polished dashboard that features a live **mobile/
 ### 2.4 Dashboard — Appearance
 | Feature | Status |
 |---|---|
-| Profile info editing (display name, bio, avatar URL, banner URL) | ✅ Done |
+| Profile info editing (display name, bio, Cloudinary avatar & banner upload with in-browser compression and live preview sync) | ✅ Done |
 | 8 colour theme presets (Indigo, Rose, Amber, Emerald, Sky, Fuchsia, Cyan, Minimal) | ✅ Done |
 | Custom hex colour picker | ✅ Done |
 | 4 button styles (Pill, Rounded, Square, Outline) | ✅ Done |
@@ -138,6 +158,51 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | Subscriber list in dashboard Tools tab | ✅ Done |
 | CSV export of captured emails | 🔲 Planned |
 
+### 2.10 Cloudinary Photo Upload & In-Browser Compression Engine
+| Feature | Status |
+|---|---|
+| Server-side Cloudinary SDK streaming (`cloudinary.uploader.upload_stream`) | ✅ Done |
+| Client-side HTML5 Canvas lossless/high-quality compression (auto-converts to WebP, custom bounds) | ✅ Done |
+| Strict image-only restriction on client (drag-and-drop & file picker `accept="image/*"`) | ✅ Done |
+| Strict server-side verification: MIME whitelist + binary magic bytes (JPEG, PNG, GIF, WebP, SVG) | ✅ Done |
+| 10MB payload size ceiling enforcement | ✅ Done |
+| Reusable `ImageUpload.tsx` component with live compression savings stats | ✅ Done |
+| Seamless fallback toggle between direct file upload and external URL input | ✅ Done |
+| Integrated for Profile Avatar, Profile Banner, and Business Link Thumbnails | ✅ Done |
+
+### 2.11 Linkle Pay: Dynamic UPI "Pay Me" & QR Intent Engine
+| Feature | Status |
+|---|---|
+| Dynamic NPCI-compliant UPI URI generation (`upi://pay?pa={upiId}&pn={displayName}&cu=INR`) | ✅ Done |
+| Automatic VPA validation (`isValidUpiId`, `cleanUpiId`) | ✅ Done |
+| Payer enters custom amount directly in their UPI app (no hardcoded fixed amount) | ✅ Done |
+| Linkle-styled interactive `UpiPayModal` with high-contrast QR (`qrcode.react` Level H) | ✅ Done |
+| One-click "Copy UPI ID" action with visual checkmark feedback | ✅ Done |
+| Mobile deep link ("Pay via UPI App") button invoking native app chooser (GPay, PhonePe, Paytm, BHIM, Cred) | ✅ Done |
+| High-resolution branded QR PNG download (`Payee Name`, `UPI ID`, `Linkle` badge) | ✅ Done |
+| Web Share API integration (`navigator.share`) with clipboard fallback | ✅ Done |
+| Reactive QR updates on UPI ID or display name change in dashboard/preview | ✅ Done |
+| Automated end-to-end QR decode verification test (`scripts/test-upi-qr-decode.js` via `jsQR`) | ✅ Done |
+| Zero regressions on PayPal, Stripe, Crypto, and Paytm accordion components | ✅ Done |
+
+### 2.12 Upstash Redis Rate Limiting
+| Feature | Status |
+|---|---|
+| Sliding window rate limiting on public routes via `@upstash/ratelimit` | ✅ Done |
+| Newsletter subscriptions limited to 5 requests / min per IP | ✅ Done |
+| Analytics tracking limited to 30 requests / 10 sec per IP | ✅ Done |
+| Auth endpoints limited to 10 requests / min per IP | ✅ Done |
+| Standard `429 Too Many Requests` responses with `X-RateLimit-*` headers | ✅ Done |
+| Resilient fail-open fallback if Redis credentials are not configured or offline | ✅ Done |
+
+### 2.13 Tag-Based Edge Caching & On-Demand Revalidation
+| Feature | Status |
+|---|---|
+| Dynamic edge caching with cache tags (`user-profile-${username}`) | ✅ Done |
+| On-demand cache invalidation via `revalidateProfile()` on profile or link updates | ✅ Done |
+| Sub-second edge response times for public `/p/[username]` pages | ✅ Done |
+
+
 ---
 
 ## 3. Tech Stack
@@ -177,6 +242,25 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | QR codes | **qrcode.react** | ^4.2.0 |
 | Utility | `clsx`, `tailwind-merge` | latest |
 
+### Media Storage & Optimization
+| Layer | Technology | Version |
+|---|---|---|
+| Cloud Media SDK | **cloudinary** | ^2.9.0 |
+| Client-Side Compression | HTML5 Canvas Resampling (WebP) | Native |
+
+### Caching & Rate Limiting
+| Layer | Technology | Version |
+|---|---|---|
+| Redis Client | **@upstash/redis** | ^1.38.0 |
+| Rate Limiter | **@upstash/ratelimit** | ^2.0.8 |
+| Edge Revalidation | Next.js `revalidateTag` (`user-profile-*`) | Native |
+
+### QR Testing & Verification
+| Layer | Technology | Version |
+|---|---|---|
+| QR Matrix Rasterizer | **qrcode** | ^1.5.4 |
+| QR Decoder | **jsqr** | ^1.4.0 |
+
 ### Email (installed, delivery pending)
 | Layer | Technology | Version |
 |---|---|---|
@@ -198,6 +282,8 @@ Users manage everything from a polished dashboard that features a live **mobile/
 d:\VibingSites\LINKLE\
 ├── prisma/
 │   └── schema.prisma          # Database schema (PostgreSQL, Prisma models)
+├── scripts/
+│   └── test-upi-qr-decode.js  # Automated QR encode/decode verification with jsQR
 ├── seed-analytics.ts          # Analytics seed script (ts-node)
 ├── src/
 │   ├── auth.ts                # NextAuth config (Credentials provider, JWT callbacks)
@@ -223,14 +309,15 @@ d:\VibingSites\LINKLE\
 │   │       │   ├── [...nextauth]/  # NextAuth handler
 │   │       │   ├── forgot-password/route.ts
 │   │       │   └── reset-password/route.ts
+│   │       ├── upload/             # POST — Cloudinary photo upload with magic byte inspection ✅
 │   │       ├── links/
 │   │       │   ├── social/         # GET, POST, DELETE, PATCH toggle, PATCH edit, POST reorder
 │   │       │   ├── business/       # GET, POST, DELETE, PATCH toggle, PATCH edit, POST reorder
 │   │       │   └── payment/        # GET, POST, DELETE, PATCH toggle, PATCH edit, POST reorder
-│   │       ├── subscribe/          # POST — email capture ✅
-│   │       ├── analytics/          # GET aggregated stats, POST view, POST click
+│   │       ├── subscribe/          # POST — email capture (rate-limited via Upstash) ✅
+│   │       ├── analytics/          # GET aggregated stats, POST view, POST click (rate-limited)
 │   │       └── user/
-│   │           ├── profile/        # PATCH user profile & appearance
+│   │           ├── profile/        # PATCH user profile & appearance (revalidates edge cache)
 │   │           └── settings/       # PATCH username/displayName, DELETE account ✅
 │   ├── components/
 │   │   ├── Providers.tsx           # SessionProvider wrapper
@@ -242,7 +329,7 @@ d:\VibingSites\LINKLE\
 │   │   │   ├── MobilePreview.tsx   # Live phone/desktop preview frame
 │   │   │   ├── PreviewContext.tsx  # React Context for live preview state
 │   │   │   ├── QRCodeModal.tsx
-│   │   │   ├── LinkEditModal.tsx   # In-place link editor with scheduling ✅
+│   │   │   ├── LinkEditModal.tsx   # In-place link editor with scheduling & thumbnails ✅
 │   │   │   ├── SettingsForm.tsx    # Username change + account deletion ✅
 │   │   │   └── StyledSelect.tsx    # Custom animated icon dropdown ✅
 │   │   ├── profile/
@@ -250,18 +337,26 @@ d:\VibingSites\LINKLE\
 │   │   │   ├── ProfileHeader.tsx
 │   │   │   ├── SocialLinks.tsx
 │   │   │   ├── BusinessSection.tsx
-│   │   │   ├── PaymentSection.tsx
+│   │   │   ├── PaymentSection.tsx  # Multi-platform support + UPI modal trigger ✅
+│   │   │   ├── UpiPayModal.tsx     # Interactive Linkle Pay UPI modal with QR & deep links ✅
 │   │   │   ├── ContactSection.tsx
 │   │   │   ├── LocationSection.tsx
 │   │   │   └── EmailCaptureSection.tsx  # Newsletter subscribe widget ✅
 │   │   ├── qr/                     # QR code components
 │   │   └── ui/
 │   │       ├── ThemeToggle.tsx     # Light / dark mode toggle
-│   │       └── avatar.tsx
+│   │       ├── avatar.tsx
+│   │       └── ImageUpload.tsx     # Drag-and-drop uploader with in-browser compression ✅
 │   ├── lib/
 │   │   ├── db.ts                   # Prisma client singleton
 │   │   ├── types.ts                # Shared TypeScript types
-│   │   └── utils.ts                # Utility helpers (cn, etc.)
+│   │   ├── utils.ts                # Utility helpers (cn, etc.)
+│   │   ├── cloudinary.ts           # Cloudinary SDK configuration singleton ✅
+│   │   ├── imageCompression.ts     # Client-side canvas compression & format validation ✅
+│   │   ├── upi.ts                  # Dynamic UPI URI generator & VPA validator ✅
+│   │   ├── ratelimit.ts            # Upstash Redis sliding window rate limiters ✅
+│   │   ├── cache.ts                # Tag-based edge cache revalidation helper ✅
+│   │   └── validation.ts           # Zod schemas for all API payloads
 │   ├── data/                       # Static data / seed content
 │   └── types/                      # Extended type declarations (next-auth module augmentation)
 └── tailwind.config.ts
@@ -296,6 +391,59 @@ Client (LinksManager)
   ◀── new link data ──────────
   setSocialLinks(prev => [...prev, data])   ← optimistic UI update
 ```
+
+### Data Flow — Cloudinary Image Upload & Client Compression
+
+```
+User selects / drops photo in ImageUpload
+        │
+        ▼
+MIME Type Validation (image/png, jpeg, webp, gif only)
+        │
+        ▼
+Client-Side Compression (`compressImage()`)
+  ├─ Aspect-ratio bounding (e.g. max 800px / 1600px)
+  ├─ Offscreen Canvas redraw with high-quality smoothing
+  └─ Encoded to optimized WebP (0.84 quality)
+        │
+        ▼
+POST /api/upload (multipart/form-data)
+  ├─ Session Authentication (`auth()`)
+  ├─ Binary Magic Byte signature inspection (JPEG, PNG, GIF, WebP)
+  ├─ 10MB payload ceiling check
+  └─ `cloudinary.uploader.upload_stream` to `linkle/{folder}`
+        │
+        ▼
+Returns secure Cloudinary CDN URL (https://res.cloudinary.com/...)
+        │
+        ▼
+Live preview updates instantly; saved to DB via User Profile or Link PATCH
+```
+
+### Data Flow — Linkle Pay UPI Intent & Dynamic QR Verification
+
+```
+Visitor clicks UPI payment button on /p/[username]
+        │
+        ▼
+PaymentSection triggers UpiPayModal
+        │
+        ▼
+Dynamic URI Generated (`src/lib/upi.ts`)
+upi://pay?pa={cleanUpiId}&pn={displayName}&cu=INR
+        │
+        ├──▶ Desktop Payer: Scans high-contrast QR (`qrcode.react` Level H)
+        │       └─ Decodes directly into payer's phone camera / UPI scanner app
+        │
+        ├──▶ Mobile Payer: Taps "Pay via UPI App" Deep Link Button
+        │       └─ Native OS intent invokes GPay, PhonePe, Paytm, BHIM, Cred
+        │
+        └──▶ Payee Tools:
+                ├─ One-click "Copy UPI ID"
+                ├─ High-res PNG QR card download (Canvas rendering)
+                └─ Native Web Share API (navigator.share)
+```
+
 
 ---
 
@@ -579,7 +727,7 @@ Permanently deletes the authenticated user's account. Prisma `onDelete: Cascade`
 ### Email Capture Endpoint
 
 #### `POST /api/subscribe`
-Captures an email for a user's newsletter list. No authentication required — called from the public profile page.
+Captures an email for a user's newsletter list. No authentication required — called from the public profile page. Rate-limited by visitor IP.
 ```json
 // Body
 { "username": "janedoe", "email": "visitor@example.com" }
@@ -587,10 +735,42 @@ Captures an email for a user's newsletter list. No authentication required — c
 // Response 201
 { "success": true, "subscription": { "id": "...", "email": "...", "createdAt": "..." } }
 
-// Errors: 400 (duplicate email, invalid format), 404 (username not found), 500
+// Errors: 400 (duplicate email, invalid format), 404 (username not found), 429 (rate limit exceeded), 500
 ```
 
 ---
+
+### Media Upload Endpoint
+
+#### `POST /api/upload`
+Streams an image asset to Cloudinary. Requires an active user session (`auth()`).
+
+- **Content-Type**: `multipart/form-data`
+- **Fields**:
+  - `file`: The binary image file (File / Blob)
+  - `folder` (optional): Target subfolder (`avatars`, `banners`, `thumbnails`, or `general`). Path-traversal sanitized.
+- **Validations & Protections**:
+  - **MIME Type Whitelist**: `image/jpeg`, `image/png`, `image/webp`, `image/gif`, `image/svg+xml`.
+  - **Magic Byte Signature Inspection**: Validates binary headers (JPEG `FF D8 FF`, PNG `89 50 4E 47`, GIF `47 49 46`, WebP `RIFF...WEBP`, SVG `<svg`) to prevent spoofed/malicious file uploads.
+  - **Size Ceiling**: 10MB maximum file size.
+  - **Auto-Optimization**: Directly piped to Cloudinary with `fetch_format: auto` and `quality: auto`.
+
+```json
+// Response 200
+{
+  "url": "https://res.cloudinary.com/j9iy9acr/image/upload/v1790520841/linkle/avatars/default_avatar.jpg",
+  "publicId": "linkle/avatars/default_avatar",
+  "width": 800,
+  "height": 800,
+  "format": "webp",
+  "bytes": 62410
+}
+
+// Errors: 400 (no file, unsupported format, corrupted binary signature, size > 10MB), 401 (unauthorized), 500 (Cloudinary credentials missing or stream error)
+```
+
+---
+
 
 ### Analytics Endpoints
 
@@ -662,6 +842,34 @@ Fetches real aggregated performance metrics and charts for the authenticated use
 
 ---
 
+### Rate Limiting & Protection
+
+Public-facing API endpoints are protected using **Upstash Redis** sliding-window rate limiters configured in `src/lib/ratelimit.ts`:
+
+| Route | Target | Limit | Window | Action on Exceed |
+|---|---|---|---|---|
+| `POST /api/subscribe` | Visitor IP | 5 requests | 60 seconds | `429 Too Many Requests` |
+| `POST /api/analytics/*` | Visitor IP | 30 requests | 10 seconds | `429 Too Many Requests` |
+| `POST /api/auth/*` | Visitor IP | 10 requests | 60 seconds | `429 Too Many Requests` |
+
+When rate-limited, responses include standard headers:
+- `X-RateLimit-Limit`: Maximum allowable requests in the window
+- `X-RateLimit-Remaining`: Requests remaining in the current window
+- `X-RateLimit-Reset`: Unix timestamp when the quota resets
+
+*Fail-Open Resilience*: If Redis is unavailable or unconfigured, the application logs a warning and allows requests through to avoid locking out legitimate users.
+
+---
+
+### Edge Caching & On-Demand Revalidation
+
+Public profile pages at `/p/[username]` leverage Next.js tag-based edge caching for sub-millisecond worldwide delivery:
+- Cache Tag: `user-profile-${username.toLowerCase()}`
+- Invalidation: `revalidateProfile(username)` in `src/lib/cache.ts` triggers on-demand cache purge whenever user details, appearance settings, or links are updated via `PATCH /api/user/profile` or `/api/links/*`.
+
+---
+
+
 ## 8. Components
 
 ### Dashboard Components (`src/components/dashboard/`)
@@ -670,12 +878,12 @@ Fetches real aggregated performance metrics and charts for the authenticated use
 |---|---|
 | `DashboardSidebar.tsx` | Persistent left nav with logo, user info, nav links, sign-out |
 | `LinksManager.tsx` | Tabbed interface for Social / Business / Payment / Tools; DnD reorder |
-| `AppearanceForm.tsx` | Profile info, colour themes, button styles, typography, location, email capture settings |
+| `AppearanceForm.tsx` | Profile info with Cloudinary avatar & banner uploaders, colour themes, button styles, typography, location, email capture settings |
 | `AnalyticsDashboard.tsx` | Stats cards, bar chart, top links, device & country breakdown |
 | `MobilePreview.tsx` | Live phone/desktop frame; renders real profile components |
 | `PreviewContext.tsx` | React Context + provider that holds the live preview user state |
 | `QRCodeModal.tsx` | Modal with `qrcode.react` QR for the user's profile URL + download |
-| `LinkEditModal.tsx` | Full-featured in-place link editor for social, business, and payment links; supports scheduled start/end dates |
+| `LinkEditModal.tsx` | Full-featured in-place link editor for social, business, and payment links; supports scheduled start/end dates and thumbnail photo upload |
 | `SettingsForm.tsx` | Username & display name editor + danger zone account deletion with typed confirmation |
 | `StyledSelect.tsx` | Custom animated dropdown with icon support; used in link modals and platform selectors |
 
@@ -688,8 +896,9 @@ These components are used both on the **public profile page** (`/p/[username]`) 
 | `ProfileContainer.tsx` | Wrapper that assembles the full public profile; centralised analytics event bubbling via data attributes |
 | `ProfileHeader.tsx` | Avatar, banner image, display name, username handle, bio |
 | `SocialLinks.tsx` | Renders social platform icon buttons |
-| `BusinessSection.tsx` | Renders titled link cards with optional description |
-| `PaymentSection.tsx` | Renders payment method buttons (UPI, PayPal, Crypto etc.) |
+| `BusinessSection.tsx` | Renders titled link cards with optional thumbnail image and description |
+| `PaymentSection.tsx` | Renders payment method buttons (UPI, PayPal, Stripe, Crypto etc.); triggers Linkle Pay interactive UPI modal for UPI cards while preserving native details accordions for others |
+| `UpiPayModal.tsx` | Interactive Linkle Pay modal: dynamic verified QR code (Level H), visible UPI ID, one-click copy, 'Pay via UPI App' mobile deep link, PNG QR download, and Web Share API |
 | `ContactSection.tsx` | Renders contact action buttons (vCard, booking, resume) |
 | `LocationSection.tsx` | Renders address text, Google Maps iframe, directions button |
 | `EmailCaptureSection.tsx` | Animated newsletter subscribe widget; calls `POST /api/subscribe`; adapts border-radius to user's `buttonStyle` |
@@ -698,8 +907,10 @@ These components are used both on the **public profile page** (`/p/[username]`) 
 
 | Component | Purpose |
 |---|---|
+| `ImageUpload.tsx` | Reusable photo uploader with client-side HTML5 canvas compression to WebP, drag-and-drop dropzone, live savings metrics, replace/remove actions, and URL fallback toggle |
 | `ThemeToggle.tsx` | Light / dark mode toggle button |
 | `avatar.tsx` | Reusable avatar component |
+
 
 ---
 
@@ -798,7 +1009,7 @@ The core product is fully functional end-to-end:
 - ✅ Public profiles with full theming, dynamic OG metadata, and scheduled link filtering
 - ✅ Dashboard with live preview
 - ✅ Links CRUD (social, business, payment, contact) with DnD reorder
-- ✅ In-place link editing with scheduled dates (LinkEditModal)
+- ✅ In-place link editor with scheduled dates & thumbnail uploads (LinkEditModal)
 - ✅ Featured link pinning
 - ✅ Appearance customisation persisted to DB (incl. email capture settings)
 - ✅ QR code generation and download
@@ -806,8 +1017,33 @@ The core product is fully functional end-to-end:
 - ✅ Email capture / newsletter subscription widget with backend deduplication
 - ✅ Monetization pricing page (3-tier: Starter / Pro / Enterprise, monthly/yearly toggle)
 - ✅ Settings page (username change with uniqueness validation + account deletion with confirmation)
+- ✅ Cloudinary photo uploads for avatars, banners, and link thumbnails with client-side canvas WebP compression and format validation
+- ✅ Linkle Pay: Dynamic UPI "Pay Me" feature with verified QR generation, deep linking, PNG download, and Web Share
+- ✅ Upstash Redis sliding-window rate limiting on public routes (newsletter, analytics, auth)
+- ✅ Tag-based edge caching and on-demand cache invalidation (revalidateProfile)
 
 ### Feature Notes
+
+#### Cloudinary Photo Upload & Compression Engine
+- **In-Browser Compression**: Uses native HTML5 Canvas drawing with `imageSmoothingQuality = "high"` in `src/lib/imageCompression.ts`. Binds max dimension (e.g. 800px / 1600px), converts raster images to optimized WebP at 0.84 quality, and displays savings metrics (e.g. `✨ 3.2 MB → 450 KB (86% saved)`).
+- **Strict Image-Only Restriction**: Enforces `accept="image/*"` and MIME whitelist (`image/jpeg`, `image/png`, `image/webp`, `image/gif`) on client; rejects non-image formats immediately.
+- **Server-Side Security**: `/api/upload` verifies authenticated sessions, enforces a 10MB ceiling, and validates **binary magic byte signatures** (JPEG, PNG, GIF, WebP, SVG) to prevent extension spoofing.
+- **Direct Stream**: Piped to Cloudinary using `cloudinary.uploader.upload_stream` to `linkle/{folder}`.
+- **UI Flexibility**: `ImageUpload.tsx` supports drag-and-drop, replace/remove buttons, live preview, and an inline fallback toggle to paste direct image URLs.
+
+#### Linkle Pay: Dynamic UPI & QR Intent System
+- **NPCI UPI Spec**: `upi://pay?pa={cleanUpiId}&pn={displayName}&cu=INR` generated dynamically in `src/lib/upi.ts`.
+- **No Fixed Amount**: Omitted `am` parameter so the payer enters their desired amount directly within their native UPI app.
+- **High-Contrast Scannable QR**: Rendered using `qrcode.react` with Error Correction Level `H` on a white backdrop for reliable scanning in both dark and light modes.
+- **Mobile Deep Link**: Deep link button (`<a href="upi://pay?...">`) styled with Linkle gradient and glow, directly launching installed UPI apps (Google Pay, PhonePe, Paytm, BHIM, Cred) on mobile devices.
+- **Payee Tools**: One-click "Copy UPI ID", high-resolution branded PNG QR card export, and native Web Share API (`navigator.share`).
+- **Automated Verification**: Verified using `jsQR` in `scripts/test-upi-qr-decode.js` ensuring encoded QR matrices decode to the exact URI intent.
+- **Zero Regressions**: PayPal, Stripe, Crypto, and Paytm continue using their existing accordion views without disruption.
+
+#### Upstash Redis Rate Limiting
+- **Sliding-Window Algorithm**: Implemented via `@upstash/ratelimit` on public endpoints (`/api/subscribe`, `/api/analytics/*`, `/api/auth/*`).
+- **Fail-Open Resilience**: Gracefully bypasses rate limiting if Redis credentials are not configured or temporarily unreachable.
+- **RFC Standard Headers**: Returns `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` with `429 Too Many Requests`.
 
 #### Real-Time Analytics System
 - **`ProfileView` & `ClickEvent`**: Tracks every mount on public `/p/[username]` paths and any outbound link tap.
@@ -818,7 +1054,7 @@ The core product is fully functional end-to-end:
 #### Email Capture System
 - Toggle enabled in Appearance dashboard; title/placeholder are customisable.
 - `EmailCaptureSection` on public profile adapts border-radius to the user's `buttonStyle`.
-- `POST /api/subscribe` validates email format and deduplicates per user.
+- `POST /api/subscribe` validates email format, deduplicates per user, and enforces IP rate limits.
 
 #### Scheduled Links
 - `startDate` / `endDate` on every link model (`SocialLink`, `BusinessLink`, `PaymentLink`, `ContactAction`).
@@ -866,20 +1102,36 @@ await transporter.sendMail({
 ### Environment Variables
 Create a `.env` file in the project root:
 ```env
-# Database (PostgreSQL)
-DATABASE_URL="postgresql://user:password@localhost:5432/linkle"
+# Database Configurations (PostgreSQL)
+DATABASE_URL="postgresql://user:password@localhost:5432/linkle?schema=public"
 
-# NextAuth
-NEXTAUTH_SECRET="your-random-secret-here"
+# NextAuth v5 Configuration
+AUTH_SECRET="your-secure-next-auth-secret-key"
+AUTH_TRUST_HOST=true
 NEXTAUTH_URL="http://localhost:3000"
 
-# App
+# Public App URLs
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-# Email (optional — for password reset delivery)
-SMTP_HOST="smtp.example.com"
-SMTP_USER="no-reply@example.com"
-SMTP_PASS="your-smtp-password"
+# Cloudinary Integration (Image Uploads & Hosting)
+CLOUDINARY_CLOUD_NAME="your-cloudinary-cloud-name"
+CLOUDINARY_API_KEY="your-cloudinary-api-key"
+CLOUDINARY_API_SECRET="your-cloudinary-api-secret"
+
+# Upstash Redis Configuration (Rate Limiting)
+UPSTASH_REDIS_REST_URL="https://your-database.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="your-rest-token-here"
+
+# Google OAuth Credentials (Optional)
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# Email Delivery (Optional)
+SMTP_HOST="smtp.resend.com"
+SMTP_PORT=587
+SMTP_USER="resend"
+SMTP_PASSWORD="your-smtp-password"
+SMTP_FROM="Linkle <noreply@yourdomain.com>"
 ```
 
 ### Installation & Dev Server
@@ -902,6 +1154,12 @@ npm run seed
 ```
 Populates sample `ProfileView` and `ClickEvent` records for a demo account using `seed-analytics.ts`.
 
+### Automated QR Decode Verification Test
+```bash
+node scripts/test-upi-qr-decode.js
+```
+Runs the automated validation test generating dynamic UPI URIs, encoding to QR, and decoding with `jsQR` to verify exact intent payload accuracy.
+
 ### Database GUI (optional)
 ```bash
 npx prisma studio
@@ -915,16 +1173,19 @@ npx prisma studio
 | Start production | `npm run start` | Starts production server |
 | Lint | `npm run lint` | ESLint check |
 | Seed analytics | `npm run seed` | Seeds sample analytics data via ts-node |
+| QR verification test | `node scripts/test-upi-qr-decode.js` | Validates UPI URI generation and verifies QR matrix decoding via jsQR |
 | Postinstall | `prisma generate` | Auto-runs after `npm install` |
 
 ### Deployment Notes
 1. Ensure `DATABASE_URL` is a **PostgreSQL** connection string (provider in `schema.prisma` is already `postgresql`).
 2. Run `npx prisma migrate deploy` in CI/CD.
-3. Set `NEXTAUTH_SECRET` to a strong random value (`openssl rand -base64 32`).
+3. Set `AUTH_SECRET` to a strong random value (`openssl rand -base64 33`).
 4. Set `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` to your production domain.
-5. Deploy to **Vercel** (recommended for Next.js) or any Node.js host.
-6. For geolocation analytics, Vercel and Cloudflare automatically inject `x-vercel-ip-country` / `cf-ipcountry` headers — no extra config needed.
+5. Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in production environment settings.
+6. Deploy to **Vercel** (recommended for Next.js) or any Node.js host.
+7. For geolocation analytics, Vercel and Cloudflare automatically inject `x-vercel-ip-country` / `cf-ipcountry` headers — no extra config needed.
 
 ---
 
-*Documentation updated: July 2026 · Linkle v1.1.0*
+*Documentation updated: September 2026 · Linkle v1.2.0*
+

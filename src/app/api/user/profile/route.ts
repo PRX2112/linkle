@@ -31,8 +31,8 @@ export async function PATCH(req: NextRequest) {
 
     const {
       displayName, bio, avatarUrl, bannerUrl,
-      themePrimaryColor, themeButtonStyle,
-      locationAddress, locationGoogleMapsEmbedUrl, locationIsVisible,
+      themePrimaryColor, themeButtonStyle, themeFontFamily,
+      locationAddress, locationGoogleMapsEmbedUrl, locationShowDirectionsBtn, locationIsVisible,
       emailCaptureEnabled, emailCaptureTitle, emailCapturePlaceholder,
     } = validation.data;
 
@@ -40,8 +40,8 @@ export async function PATCH(req: NextRequest) {
       where: { id: session.user.id },
       data: {
         displayName, bio, avatarUrl, bannerUrl,
-        themePrimaryColor, themeButtonStyle,
-        locationAddress, locationGoogleMapsEmbedUrl, locationIsVisible,
+        themePrimaryColor, themeButtonStyle, themeFontFamily,
+        locationAddress, locationGoogleMapsEmbedUrl, locationShowDirectionsBtn, locationIsVisible,
         emailCaptureEnabled,
         emailCaptureTitle,
         emailCapturePlaceholder,

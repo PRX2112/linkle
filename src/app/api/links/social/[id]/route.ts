@@ -41,7 +41,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       );
     }
 
-    const { platform, url, label, startDate, endDate, featured } = validation.data;
+    const { platform, url, label, startDate, endDate, featured, utmEnabled, utmSource, utmMedium, utmCampaign, utmContent, utmTerm } = validation.data;
 
     const updatedLink = await prisma.socialLink.update({
       where: { id },
@@ -52,6 +52,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         startDate: startDate !== undefined ? (startDate ? new Date(startDate) : null) : undefined,
         endDate: endDate !== undefined ? (endDate ? new Date(endDate) : null) : undefined,
         featured: featured !== undefined ? featured : undefined,
+        utmEnabled: utmEnabled !== undefined ? utmEnabled : undefined,
+        utmSource: utmSource !== undefined ? (utmSource || null) : undefined,
+        utmMedium: utmMedium !== undefined ? (utmMedium || null) : undefined,
+        utmCampaign: utmCampaign !== undefined ? (utmCampaign || null) : undefined,
+        utmContent: utmContent !== undefined ? (utmContent || null) : undefined,
+        utmTerm: utmTerm !== undefined ? (utmTerm || null) : undefined,
       },
     });
 

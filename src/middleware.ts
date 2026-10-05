@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
     limitType = "subscribe";
   } else if (path.startsWith("/api/analytics")) {
     limitType = "analytics";
-  } else if (path.startsWith("/api/auth")) {
+  } else if (path === "/api/register" || path.startsWith("/api/auth")) {
     // Exclude NextAuth read-only/helper endpoints to prevent breaking active sessions
     const excludedAuthPaths = [
       "/api/auth/session",
@@ -26,8 +26,13 @@ export async function middleware(request: NextRequest) {
 
   // If the path matches one of our target routes, apply rate limiting
   if (limitType) {
-    // Determine user's IP (check request.ip first, then x-forwarded-for, fallback to local)
-    const ip = (request as any).ip || request.headers.get("x-forwarded-for")?.split(",")[0] || "127.0.0.1";
+    // Robust IP resolution prioritizes trusted proxy headers before x-forwarded-for
+    const ip =
+      request.headers.get("x-real-ip")?.trim() ||
+      request.headers.get("cf-connecting-ip")?.trim() ||
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      (request as any).ip ||
+      "127.0.0.1";
 
     const { success, limit, remaining, reset } = await checkRateLimit(ip, limitType);
 
@@ -35,7 +40,7 @@ export async function middleware(request: NextRequest) {
       const errorMessages = {
         subscribe: "Too many subscription attempts. Please try again in a minute.",
         analytics: "Too many requests. Please slow down.",
-        auth: "Too many authentication attempts. Please try again later.",
+        auth: "Too many authentication attempts. Please slow down and try again later.",
       };
 
       return new NextResponse(
@@ -62,5 +67,7 @@ export const config = {
     "/api/subscribe",
     "/api/analytics/:path*",
     "/api/auth/:path*",
+    "/api/register",
   ],
 };
+

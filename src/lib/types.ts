@@ -20,6 +20,12 @@ export interface SocialLink {
     label?: string; // e.g., "My Portfolio"
     isVisible: boolean;
     featured?: boolean;
+    utmEnabled?: boolean;
+    utmSource?: string | null;
+    utmMedium?: string | null;
+    utmCampaign?: string | null;
+    utmContent?: string | null;
+    utmTerm?: string | null;
 }
 
 export interface BusinessLink {
@@ -30,6 +36,12 @@ export interface BusinessLink {
     thumbnailUrl?: string;
     isVisible: boolean;
     featured?: boolean;
+    utmEnabled?: boolean;
+    utmSource?: string | null;
+    utmMedium?: string | null;
+    utmCampaign?: string | null;
+    utmContent?: string | null;
+    utmTerm?: string | null;
 }
 
 export interface LocationInfo {
@@ -71,7 +83,7 @@ export interface UserTheme {
     primaryColor: string;
     backgroundColor: string; // "light" | "dark" | hex
     fontFamily: string;
-    buttonStyle: "rounded" | "square" | "pill";
+    buttonStyle: "rounded" | "square" | "pill" | "outline";
 }
 
 export interface UserProfile {
@@ -90,4 +102,6 @@ export interface UserProfile {
     emailCaptureEnabled?: boolean;
     emailCaptureTitle?: string;
     emailCapturePlaceholder?: string;
+    onboardingCompleted?: boolean;
+    selectedTemplate?: string | null;
 }

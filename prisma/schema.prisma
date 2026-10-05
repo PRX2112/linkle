@@ -70,6 +70,10 @@ model User {
   avatarUrl     String?
   bannerUrl     String?
   
+  // Onboarding & Template Settings
+  onboardingCompleted Boolean @default(false)
+  selectedTemplate    String?
+  
   // Email Capture Settings
   emailCaptureEnabled     Boolean @default(false)
   emailCaptureTitle       String  @default("Subscribe to my newsletter")
@@ -106,6 +110,9 @@ model User {
 
   profileViews   ProfileView[]
   clickEvents    ClickEvent[]
+  usernameHistory UsernameHistory[]
+  analyticsEvents AnalyticsEvent[]
+  subscription    Subscription?
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -120,9 +127,15 @@ model SocialLink {
   label     String?
   isVisible Boolean   @default(true)
   order     Int       @default(0)
-  startDate DateTime?
-  endDate   DateTime?
-  featured  Boolean   @default(false)
+  startDate   DateTime?
+  endDate     DateTime?
+  featured    Boolean   @default(false)
+  utmEnabled  Boolean   @default(false)
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
 }
 
 model BusinessLink {
@@ -138,6 +151,12 @@ model BusinessLink {
   startDate    DateTime?
   endDate      DateTime?
   featured     Boolean   @default(false)
+  utmEnabled   Boolean   @default(false)
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  utmContent   String?
+  utmTerm      String?
 }
 
 model PaymentLink {
@@ -209,3 +228,78 @@ model CapturedEmail {
 
   @@index([userId, createdAt])
 }
+
+model UsernameHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username  String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([username])
+  @@index([userId])
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventType   String
+  visitorId   String?
+  targetId    String?
+  targetType  String?
+  targetTitle String?
+  url         String?
+  referrer    String?
+  device      String?
+  country     String?
+  metadata    Json?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, eventType, createdAt])
+  @@index([userId, targetId])
+  @@index([userId, referrer])
+  @@index([userId, utmCampaign])
+  @@index([userId, utmSource])
+  @@index([userId, utmMedium])
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String    @unique
+  stripeSubscriptionId String?   @unique
+  stripePriceId        String?
+  status               String    @default("incomplete") // active, trialing, past_due, canceled, unpaid, incomplete, incomplete_expired
+  plan                 String    @default("STARTER") // STARTER, PRO, ENTERPRISE
+  interval             String?   // month, year
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  canceledAt           DateTime?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+}
+
+model WebhookEvent {
+  id          String   @id // Stripe event ID (evt_...)
+  type        String
+  processedAt DateTime @default(now())
+  payload     Json?
+
+  @@index([type])
+}
+

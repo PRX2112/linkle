@@ -1,7 +1,5 @@
 "use client";
 
-import { UserProfile } from "@/lib/types";
-import { BadgeCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ProfileHeaderProps {
@@ -9,7 +7,7 @@ interface ProfileHeaderProps {
     username: string;
     bio: string | null;
     avatarUrl: string | null;
-    bannerUrl?: string;
+    bannerUrl?: string | null;
 }
 
 export default function ProfileHeader({
@@ -20,61 +18,74 @@ export default function ProfileHeader({
     bannerUrl,
 }: ProfileHeaderProps) {
     const nameToUse = displayName || username || "User";
+    const hasBanner = Boolean(bannerUrl && bannerUrl.trim().length > 0);
 
     return (
         <div className="w-full flex flex-col items-center">
-            {/* Banner */}
-            <div className="w-full h-32 md:h-48 overflow-hidden rounded-b-2xl relative bg-gradient-to-br from-purple-400 via-pink-500 to-red-500">
-                {bannerUrl && (
+            {/* Banner: Rendered ONLY if real bannerUrl exists */}
+            {hasBanner ? (
+                <div className="w-full h-36 sm:h-48 md:h-56 overflow-hidden rounded-b-2xl sm:rounded-b-3xl relative bg-zinc-100 dark:bg-zinc-800">
                     <img
-                        src={bannerUrl}
-                        alt="Banner"
+                        src={bannerUrl!}
+                        alt={`${nameToUse}'s profile banner`}
                         className="w-full h-full object-cover"
+                        loading="eager"
                     />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-            </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                </div>
+            ) : null}
 
-            {/* Avatar */}
+            {/* Avatar Container */}
             <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
+                initial={{ scale: 0.85, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className="-mt-16 mb-4 relative z-10"
+                className={`${hasBanner ? "-mt-14 sm:-mt-16" : "pt-8 sm:pt-12"} mb-4 relative z-10`}
             >
-                <div className="rounded-full p-1 bg-gradient-to-br from-purple-500 to-pink-500 shadow-glow">
-                    <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-background shadow-lg">
+                <div className="relative rounded-full p-1 bg-background ring-2 ring-[var(--user-primary)]/20 shadow-md">
+                    <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-full overflow-hidden border-4 border-background dark:border-zinc-950 shadow-inner bg-zinc-100 dark:bg-zinc-800">
                         {avatarUrl ? (
-                          <img src={avatarUrl} alt={nameToUse} className="w-full h-full object-cover" />
+                            <img
+                                src={avatarUrl}
+                                alt={nameToUse}
+                                className="w-full h-full object-cover"
+                                loading="eager"
+                            />
                         ) : (
-                          <div className="flex items-center justify-center w-full h-full bg-gray-200 text-gray-600 font-bold text-2xl uppercase">
-                            {(() => {
-                              const parts = nameToUse.trim().split(/\s+/);
-                              if (parts.length === 1) {
-                                return parts[0][0].toUpperCase();
-                              }
-                              return (parts[0][0] + parts[1][0]).toUpperCase();
-                            })()}
-                          </div>
+                            <div className="flex items-center justify-center w-full h-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-bold text-2xl uppercase select-none">
+                                {(() => {
+                                    const parts = nameToUse.trim().split(/\s+/);
+                                    if (parts.length === 1) {
+                                        return parts[0][0]?.toUpperCase() || "U";
+                                    }
+                                    return ((parts[0][0] || "") + (parts[1][0] || "")).toUpperCase();
+                                })()}
+                            </div>
                         )}
                     </div>
                 </div>
             </motion.div>
 
-            {/* Info */}
+            {/* Profile Identity Details */}
             <motion.div
-                initial={{ y: 20, opacity: 0 }}
+                initial={{ y: 14, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="text-center px-4 max-w-md"
+                transition={{ duration: 0.35, delay: 0.08 }}
+                className="text-center px-4 max-w-md w-full"
             >
-                <h1 className="text-3xl font-black flex items-center justify-center gap-2">
+                {/* Headline Display Name */}
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight">
                     {nameToUse}
-                    <BadgeCheck className="w-6 h-6 text-blue-500 fill-blue-500" />
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">@{username}</p>
-                {bio && (
-                    <p className="mt-4 text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+
+                {/* Canonical Username Handle */}
+                <p className="text-xs sm:text-sm font-medium font-mono text-gray-500 dark:text-gray-400 mt-1 select-all">
+                    @{username}
+                </p>
+
+                {/* Supporting Bio */}
+                {bio && bio.trim().length > 0 && (
+                    <p className="mt-3 text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line break-words">
                         {bio}
                     </p>
                 )}

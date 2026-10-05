@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { SocialLinkCreateSchema } from "@/lib/validation";
 import { revalidateProfile } from "@/lib/cache";
+import { verifyLinkLimit } from "@/lib/billing/entitlements";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,17 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const limitCheck = await verifyLinkLimit(session.user.id);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: `Starter plan link limit reached (${limitCheck.maxAllowed} links). Upgrade to Pro for unlimited links.`,
+          upgradeRequired: true,
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const validation = SocialLinkCreateSchema.safeParse(body);
 
@@ -28,10 +40,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { platform, url, label } = validation.data;
+    const { platform, url, label, utmEnabled, utmSource, utmMedium, utmCampaign, utmContent, utmTerm } = validation.data;
 
     const count = await prisma.socialLink.count({ where: { userId: session.user.id } });
-    const link = await prisma.socialLink.create({ data: { userId: session.user.id, platform, url, label, order: count } });
+    const link = await prisma.socialLink.create({
+      data: {
+        userId: session.user.id,
+        platform,
+        url,
+        label,
+        utmEnabled: utmEnabled ?? false,
+        utmSource: utmSource || null,
+        utmMedium: utmMedium || null,
+        utmCampaign: utmCampaign || null,
+        utmContent: utmContent || null,
+        utmTerm: utmTerm || null,
+        order: count,
+      },
+    });
 
     revalidateProfile(session.user.username);
 
