@@ -5,7 +5,7 @@ const STEPS = [
   {
     number: "01",
     title: "Claim your profile handle",
-    description: "Choose your unique username (e.g. linkle.app/p/yourname), upload your avatar, and add your bio in seconds.",
+    description: "Choose your unique username (e.g. linklez.vercel.app/p/yourname), upload your avatar, and add your bio in seconds.",
     icon: UserCheck,
   },
   {

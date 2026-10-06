@@ -47,8 +47,8 @@ export function DashboardHeader({
   const profileUrl = typeof window !== "undefined" && username
     ? `${window.location.origin}/p/${username}`
     : username
-    ? `https://linkle.app/p/${username}`
-    : "";
+      ? `https://linklez.vercel.app/p/${username}`
+      : "";
 
   const handleCopyLink = async () => {
     if (!profileUrl) return;
@@ -118,7 +118,7 @@ export function DashboardHeader({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg text-xs font-medium bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-750 transition-colors"
             >
-              <span>linkle.app/p/{username}</span>
+              <span>linklez.vercel.app/p/{username}</span>
               <ExternalLink className="w-3 h-3 text-gray-400" />
             </a>
 

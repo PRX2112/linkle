@@ -13,7 +13,7 @@ interface QRCodeModalProps {
 export default function QRCodeModal({ username, displayName, onClose }: QRCodeModalProps) {
   const appBase = typeof window !== "undefined" && window.location.origin
     ? window.location.origin
-    : (process.env.NEXT_PUBLIC_APP_URL || "https://linkle.app");
+    : (process.env.NEXT_PUBLIC_APP_URL || "https://linklez.vercel.app");
   const cleanUsername = username.trim().toLowerCase();
   const profileUrl = `${appBase}/p/${cleanUsername}`;
   const svgRef = useRef<SVGSVGElement | null>(null);

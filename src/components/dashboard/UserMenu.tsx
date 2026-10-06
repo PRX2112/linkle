@@ -41,8 +41,8 @@ export function UserMenu({ user, isCollapsed = false }: UserMenuProps) {
   const profileUrl = typeof window !== "undefined" && username
     ? `${window.location.origin}/p/${username}`
     : username
-    ? `https://linkle.app/p/${username}`
-    : "";
+      ? `https://linklez.vercel.app/p/${username}`
+      : "";
 
   const handleCopyLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -190,7 +190,7 @@ export function UserMenu({ user, isCollapsed = false }: UserMenuProps) {
                   <ExternalLink className="w-4 h-4 text-gray-400" />
                   View public profile
                 </span>
-                <span className="text-xs text-gray-400">linkle.app/p/{username}</span>
+                <span className="text-xs text-gray-400">linklez.vercel.app/p/{username}</span>
               </a>
 
               <button

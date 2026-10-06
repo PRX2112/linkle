@@ -54,11 +54,11 @@ if (runTest('Modal.tsx bounds surface to 100dvh and provides internal scrollable
 
 // 3. DashboardHeader Mobile Touch Targets & Canonical Domain
 totalTests++;
-if (runTest('DashboardHeader.tsx provides comfortable touch targets and linkle.app canonical URL', () => {
+if (runTest('DashboardHeader.tsx provides comfortable touch targets and linklez.vercel.app canonical URL', () => {
   const content = fs.readFileSync(path.join(__dirname, '../src/components/dashboard/DashboardHeader.tsx'), 'utf-8');
   assert(content.includes('min-w-[38px] min-h-[38px]'), 'Mobile menu button must have >=38px touch envelope');
   assert(content.includes('min-h-[38px]'), 'Mobile preview toggle button must have >=38px touch envelope');
-  assert(content.includes('linkle.app/p/'), 'DashboardHeader must display linkle.app canonical URL');
+  assert(content.includes('linklez.vercel.app/p/'), 'DashboardHeader must display linklez.vercel.app canonical URL');
   assert(!content.includes('linkle.me/p/'), 'DashboardHeader must not display outdated linkle.me URL');
 })) totalPassed++;
 
@@ -83,9 +83,9 @@ if (runTest('DashboardShell.tsx manages body scroll lock and safe areas for mobi
 
 // 6. UserMenu Canonical Link
 totalTests++;
-if (runTest('UserMenu.tsx canonical link references linkle.app', () => {
+if (runTest('UserMenu.tsx canonical link references linklez.vercel.app', () => {
   const content = fs.readFileSync(path.join(__dirname, '../src/components/dashboard/UserMenu.tsx'), 'utf-8');
-  assert(content.includes('linkle.app/p/'), 'UserMenu must display linkle.app canonical URL');
+  assert(content.includes('linklez.vercel.app/p/'), 'UserMenu must display linklez.vercel.app canonical URL');
   assert(!content.includes('linkle.me/p/'), 'UserMenu must not display outdated linkle.me URL');
 })) totalPassed++;
 
@@ -99,9 +99,9 @@ if (runTest('LinkItemRow.tsx provides >=36px drag handle and more-menu envelopes
 
 // 8. LinksManager Canonical Link and Responsive Layout
 totalTests++;
-if (runTest('LinksManager.tsx uses linkle.app canonical URL and responsive category tabs', () => {
+if (runTest('LinksManager.tsx uses linklez.vercel.app canonical URL and responsive category tabs', () => {
   const content = fs.readFileSync(path.join(__dirname, '../src/components/dashboard/LinksManager.tsx'), 'utf-8');
-  assert(content.includes('linkle.app/p/'), 'LinksManager must display linkle.app URL');
+  assert(content.includes('linklez.vercel.app/p/'), 'LinksManager must display linklez.vercel.app URL');
   assert(!content.includes('linkle.me/p/'), 'LinksManager must not display outdated linkle.me URL');
   assert(content.includes('overflow-x-auto no-scrollbar'), 'Category tabs must scroll smoothly without visible scrollbar');
 })) totalPassed++;
@@ -145,7 +145,7 @@ totalTests++;
 if (runTest('Settings sections provide full-width mobile action buttons and canonical domain', () => {
   const profileSection = fs.readFileSync(path.join(__dirname, '../src/components/dashboard/settings/AccountProfileSection.tsx'), 'utf-8');
   assert(profileSection.includes('w-full sm:w-auto'), 'Save button must be full-width on mobile');
-  assert(profileSection.includes('linkle.app/p/'), 'Username preview must show linkle.app');
+  assert(profileSection.includes('linklez.vercel.app/p/'), 'Username preview must show linklez.vercel.app');
 
   const securitySection = fs.readFileSync(path.join(__dirname, '../src/components/dashboard/settings/AccountSecuritySection.tsx'), 'utf-8');
   assert(securitySection.includes('w-full sm:w-auto'), 'Reset link button must be full-width on mobile');

@@ -238,8 +238,8 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
   const profileUrl = typeof window !== "undefined" && username
     ? `${window.location.origin}/p/${username}`
     : username
-    ? `https://linkle.app/p/${username}`
-    : "";
+      ? `https://linklez.vercel.app/p/${username}`
+      : "";
 
   const handleCopyProfile = async () => {
     if (!profileUrl) return;
@@ -541,7 +541,7 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
           {/* Compact Public Profile URL Bar */}
           {username && (
             <div className="inline-flex items-center gap-2 mt-2 px-2.5 py-1 rounded-md bg-gray-100/70 dark:bg-zinc-800/60 border border-gray-200/60 dark:border-zinc-700/60 text-xs">
-              <span className="text-gray-400">linkle.app/p/{username}</span>
+              <span className="text-gray-400">linklez.vercel.app/p/{username}</span>
               <button
                 type="button"
                 onClick={handleCopyProfile}
@@ -633,19 +633,17 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all select-none whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 ${
-                isActive
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all select-none whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 ${isActive
                   ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100 shadow-subtle font-semibold"
                   : "text-gray-500 hover:text-gray-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-white/40 dark:hover:bg-zinc-700/40"
-              }`}
+                }`}
             >
               <span>{tab.label}</span>
               <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                  isActive
+                className={`px-1.5 py-0.2 rounded-full text-[10px] ${isActive
                     ? "bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 font-semibold"
                     : "bg-gray-200/70 dark:bg-zinc-700/60 text-gray-500 dark:text-zinc-400"
-                }`}
+                  }`}
               >
                 {tab.count}
               </span>
@@ -1222,10 +1220,10 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
               cat === "social"
                 ? "add-social-section"
                 : cat === "business"
-                ? "add-business-section"
-                : cat === "payments"
-                ? "add-payment-section"
-                : undefined;
+                  ? "add-business-section"
+                  : cat === "payments"
+                    ? "add-payment-section"
+                    : undefined;
             if (sectionId) {
               document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
             }

@@ -127,7 +127,7 @@ export function RegisterForm() {
           </label>
           <div className="flex items-center h-11 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
             <span className="px-3 text-xs font-mono text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800/80 border-r border-gray-200 dark:border-zinc-700 h-full flex items-center shrink-0">
-              linkle.app/p/
+              linklez.vercel.app/p/
             </span>
             <input
               id="username"

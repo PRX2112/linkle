@@ -50,33 +50,30 @@ export default function HeroProfilePreview() {
           <button
             type="button"
             onClick={() => setActiveTab("profile")}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-              activeTab === "profile"
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${activeTab === "profile"
                 ? "bg-white dark:bg-zinc-800 text-gray-900 dark:text-white shadow-xs"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            }`}
+              }`}
           >
             Profile
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("upi")}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
-              activeTab === "upi"
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${activeTab === "upi"
                 ? "bg-brand-600 text-white shadow-xs"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            }`}
+              }`}
           >
             <span>Linkle Pay</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("qr")}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
-              activeTab === "qr"
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${activeTab === "qr"
                 ? "bg-white dark:bg-zinc-800 text-gray-900 dark:text-white shadow-xs"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            }`}
+              }`}
           >
             <QrCode className="w-3 h-3" />
             <span>QR</span>
@@ -252,7 +249,7 @@ export default function HeroProfilePreview() {
                   Profile QR Code
                 </span>
                 <h4 className="font-bold text-base text-gray-900 dark:text-white">
-                  linkle.app/p/alexrivera
+                  linklez.vercel.app/p/alexrivera
                 </h4>
                 <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
                   Point any phone camera to view this profile instantly.

@@ -43,7 +43,7 @@ All auth screens are built from reusable components in `src/components/auth/`:
 - **Server-Side Session Check**: Authenticated users visiting `/register` are redirected directly to `/dashboard`.
 - **Form Controls**:
   - Full Name: `autoComplete="name"`, max 50 chars.
-  - Username: Auto-lowercases and filters special characters; includes visual `linkle.app/p/` prefix.
+  - Username: Auto-lowercases and filters special characters; includes visual `linklez.vercel.app/p/` prefix.
   - Email: `autoComplete="email"`.
   - Password & Confirm Password: `autoComplete="new-password"` with dynamic length check (min 8 chars) and real-time matching indicator.
 - **Onboarding Transition**: Upon successful registration, the client invokes `signIn("credentials", ...)` and forwards the new user directly to `/dashboard?onboarding=true` to enter the guided template setup.

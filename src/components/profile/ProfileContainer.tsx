@@ -25,7 +25,7 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
     const [showQR, setShowQR] = useState(false);
     const [showShareToast, setShowShareToast] = useState(false);
 
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://linkle.app";
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://linklez.vercel.app";
     const profileUrl = `${origin}/p/${user.username}`;
 
     // Track profile view on initial page load

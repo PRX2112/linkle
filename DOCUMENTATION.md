@@ -1082,7 +1082,7 @@ const transporter = nodemailer.createTransport({
 });
 
 await transporter.sendMail({
-  from: 'Linkle <no-reply@linkle.app>',
+  from: 'Linkle <no-reply@linklez.vercel.app>',
   to: email,
   subject: 'Reset your Linkle password',
   html: `<a href="${resetUrl}">Reset password</a>`,

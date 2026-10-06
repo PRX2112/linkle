@@ -99,7 +99,7 @@ async function runTests() {
   });
 
   test("RegisterForm includes real username prefix and validation checklist", () => {
-    assert(registerForm.includes("linkle.app/p/"), "Displays profile prefix");
+    assert(registerForm.includes("linklez.vercel.app/p/"), "Displays profile prefix");
     assert(registerForm.includes("isPasswordLongEnough"), "Checks minimum length");
     assert(registerForm.includes("doPasswordsMatch"), "Checks password match");
   });

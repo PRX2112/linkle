@@ -73,7 +73,7 @@ export default function DemoProfilePage() {
             { id: 'social-4', platform: 'youtube' as SocialPlatform, url: 'https://youtube.com/@linkle_demo', isVisible: true },
             { id: 'social-5', platform: 'github' as SocialPlatform, url: 'https://github.com/linkle_demo', isVisible: true },
             { id: 'social-6', platform: 'whatsapp' as SocialPlatform, url: 'https://wa.me/1234567890', isVisible: true },
-            { id: 'social-7', platform: 'email' as SocialPlatform, url: 'mailto:demo@linkle.app', isVisible: true },
+            { id: 'social-7', platform: 'email' as SocialPlatform, url: 'mailto:demo@linklez.vercel.app', isVisible: true },
         ],
         businessLinks: [
             {

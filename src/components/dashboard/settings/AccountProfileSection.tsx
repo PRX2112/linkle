@@ -36,7 +36,7 @@ export function AccountProfileSection({
   const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Canonical profile URL
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://linkle.app";
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://linklez.vercel.app";
   const canonicalUrl = `${origin}/p/${username || user.username || ""}`;
 
   // Check username availability when user stops typing
@@ -224,7 +224,7 @@ export function AccountProfileSection({
           </label>
           <div className="flex items-center rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
             <span className="px-3.5 py-2.5 bg-gray-50 dark:bg-zinc-800/80 text-gray-500 dark:text-gray-400 text-xs font-mono font-medium border-r border-gray-200 dark:border-zinc-700 select-none">
-              linkle.app/p/
+              linklez.vercel.app/p/
             </span>
             <input
               type="text"

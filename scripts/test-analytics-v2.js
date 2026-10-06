@@ -42,7 +42,7 @@ async function runTests() {
     testUser = await prisma.user.create({
       data: {
         username: 'analytics_test_user',
-        email: 'analytics_test@linkle.app',
+        email: 'analytics_test@linklez.vercel.app',
         displayName: 'Analytics Test Creator',
         plan: 'free',
       }
@@ -119,7 +119,7 @@ async function runTests() {
 
   for (const ev of allEventsForUser) {
     const str = JSON.stringify(ev);
-    if (str.includes('@linkle.app') || str.includes('subscriber@') || str.includes('test@example.com')) {
+    if (str.includes('@linklez.vercel.app') || str.includes('subscriber@') || str.includes('test@example.com')) {
       rawEmailFound = true;
     }
     // Check if IPv4-like pattern is saved
@@ -136,7 +136,7 @@ async function runTests() {
   const views = allEventsForUser.filter(e => e.eventType === 'PROFILE_VIEW').length; // 5
   const clicks = allEventsForUser.filter(e => ['LINK_CLICK', 'CTA_CLICK', 'PAYMENT_CLICK'].includes(e.eventType)).length; // 4
   const ctr = views > 0 ? Number(((clicks / views) * 100).toFixed(1)) : 0;
-  
+
   const emailSubscribes = allEventsForUser.filter(e => e.eventType === 'EMAIL_SUBSCRIBE').length; // 1
   const emailRate = views > 0 ? Number(((emailSubscribes / views) * 100).toFixed(1)) : 0;
 
@@ -248,7 +248,7 @@ async function runTests() {
     emptyUser = await prisma.user.create({
       data: {
         username: 'analytics_empty_user',
-        email: 'empty_user@linkle.app',
+        email: 'empty_user@linklez.vercel.app',
         displayName: 'Empty User',
         plan: 'free',
       }

@@ -157,10 +157,10 @@ Expanded `RESERVED_USERNAMES` in [`src/lib/validation.ts`](file:///d:/VibingSite
 * In [`src/app/p/[username]/page.tsx`](file:///d:/VibingSites/LINKLE/src/app/p/[username]/page.tsx), `generateMetadata` resolves aliases to the current user's profile and emits:
   ```ts
   alternates: {
-    canonical: `https://linkle.app/p/${user.username}`,
+    canonical: `https://linklez.vercel.app/p/${user.username}`,
   },
   openGraph: {
-    url: `https://linkle.app/p/${user.username}`,
+    url: `https://linklez.vercel.app/p/${user.username}`,
     images: [...],
   }
   ```
