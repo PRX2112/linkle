@@ -15,10 +15,12 @@ export default async function DashboardPage() {
       paymentLinks: { orderBy: { order: "asc" } },
       contactActions: { orderBy: { order: "asc" } },
       capturedEmails: { orderBy: { createdAt: "desc" } },
+      products: { orderBy: { order: "asc" } },
     },
   });
 
   if (!user) redirect("/login");
+  if (!user.username) redirect("/claim-username");
 
   // Fetch real click event counts grouped by linkId
   const clickCounts = await prisma.clickEvent.groupBy({

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 import ProfileContainer from '@/components/profile/ProfileContainer';
 import { notFound, permanentRedirect } from 'next/navigation';
-import type { UserProfile, SocialLink, BusinessLink, LocationInfo, PaymentOption, ContactAction, SocialPlatform, PaymentPlatform } from '@/lib/types';
+import type { UserProfile, SocialLink, BusinessLink, LocationInfo, PaymentOption, ContactAction, SocialPlatform, PaymentPlatform, ProductInfo, ProductType } from '@/lib/types';
 import { unstable_cache } from 'next/cache';
 
 interface Props {
@@ -187,6 +187,12 @@ const getCachedProfile = (username: string) => {
                         },
                         orderBy: { order: 'asc' },
                     },
+                    products: {
+                        where: {
+                            isActive: true,
+                        },
+                        orderBy: { order: 'asc' },
+                    },
                 },
             });
         },
@@ -235,6 +241,7 @@ export default async function ProfilePage(props: Props) {
         bio: dbUser.bio ?? '',
         avatarUrl: dbUser.avatarUrl ?? dbUser.image ?? null,
         bannerUrl: dbUser.bannerUrl ?? undefined,
+        plan: dbUser.plan || "free",
         emailCaptureEnabled: dbUser.emailCaptureEnabled,
         emailCaptureTitle: dbUser.emailCaptureTitle,
         emailCapturePlaceholder: dbUser.emailCapturePlaceholder,
@@ -293,6 +300,17 @@ export default async function ProfilePage(props: Props) {
             url: l.url,
             isVisible: l.isVisible,
             featured: l.featured,
+        })),
+        products: ((dbUser as any).products || []).map((p: any): ProductInfo => ({
+            id: p.id,
+            title: p.title,
+            description: p.description,
+            priceInCents: p.priceInCents,
+            currency: p.currency,
+            type: p.type as ProductType,
+            fileUrl: p.fileUrl,
+            isActive: p.isActive,
+            order: p.order,
         })),
     };
 

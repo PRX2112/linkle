@@ -62,7 +62,7 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | Reset password (token-validated, bcrypt re-hash) | ✅ Done |
 | Protected dashboard routes (server-side redirect) | ✅ Done |
 | Account deletion (with typed confirmation) | ✅ Done |
-| OAuth providers (Google, GitHub, etc.) | 🔲 Planned |
+| OAuth providers (Google completed; GitHub planned) | ✅ Done |
 | Email delivery for password reset | 🔲 Planned (nodemailer installed) |
 
 ### 2.2 Public Profile Page (`/p/:username`)
@@ -71,6 +71,7 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | Profile header (avatar, banner, display name, bio, username) | ✅ Done |
 | Social links section with platform icons | ✅ Done |
 | Business / custom link blocks with thumbnail images | ✅ Done |
+| Products section (Tips, Digital Files, Flat Offers) with one-time Stripe Checkout | ✅ Done |
 | Payment methods section with Linkle Pay (Dynamic UPI "Pay Me" modal with verified QR, deep link, PNG download + PayPal, Stripe, Crypto...) | ✅ Done |
 | Location section with embedded Google Maps | ✅ Done |
 | Contact actions section | ✅ Done |
@@ -90,14 +91,17 @@ Users manage everything from a polished dashboard that features a live **mobile/
 ### 2.3 Dashboard — Links Manager
 | Feature | Status |
 |---|---|
-| Tabs: Social / Links / Payments / Tools | ✅ Done |
-| Add, delete, toggle visibility per link | ✅ Done |
+| Tabs: Social / Links / Products / Payments / Tools | ✅ Done |
+| Digital Products & Flat Tips block with Stripe Checkout | ✅ Done |
+| Tier-based product gating (Free: 1, Pro: 5, Business: Unlimited) | ✅ Done |
+| Add, delete, toggle visibility per link or product | ✅ Done |
 | Drag-and-drop reorder (persisted to DB via API) | ✅ Done |
 | Per-link click counter (real data from ClickEvent DB) | ✅ Done |
 | Pin a link as "Featured" | ✅ Done (schema + UI) |
 | QR code modal (downloadable) | ✅ Done |
 | Business link thumbnail photo upload with client-side compression | ✅ Done |
 | Email capture settings & subscriber list (Tools tab) | ✅ Done |
+| CSV export of captured emails (Pro/Business tier gated) | ✅ Done |
 | Link edit in-place (LinkEditModal) | ✅ Done |
 | Scheduled links (set start/end dates per link) | ✅ Done (schema + UI + server enforcement) |
 
@@ -156,7 +160,7 @@ Users manage everything from a polished dashboard that features a live **mobile/
 | `EmailCaptureSection` widget on public profile | ✅ Done |
 | `POST /api/subscribe` backend endpoint | ✅ Done |
 | Subscriber list in dashboard Tools tab | ✅ Done |
-| CSV export of captured emails | 🔲 Planned |
+| CSV export of captured emails | ✅ Done |
 
 ### 2.10 Cloudinary Photo Upload & In-Browser Compression Engine
 | Feature | Status |
@@ -676,6 +680,50 @@ Persists a new display order after drag-and-drop.
 
 ---
 
+### Product Endpoints
+
+Creators can sell digital files, take paid shoutouts/offers, or accept direct flat tips with one-time Stripe Checkout.
+
+#### `GET /api/products`
+Returns all products for the authenticated user, ordered by `order` asc.
+
+#### `POST /api/products`
+Creates a new product block. Gated by user plan active product limits (Free: 1, Pro: 5, Business: Unlimited).
+```json
+// Body
+{
+  "title": "Minimal Notion Template",
+  "description": "My daily productivity dashboard system.",
+  "priceInCents": 999,
+  "currency": "usd",
+  "type": "DIGITAL_FILE",
+  "fileUrl": "https://res.cloudinary.com/..."
+}
+// Response 201 — Product object
+```
+
+#### `PATCH /api/products/[id]`
+Updates an existing product's fields (`title`, `description`, `priceInCents`, `fileUrl`, etc.).
+
+#### `PATCH /api/products/[id]/toggle`
+Toggles `isActive` state. Checks plan limit when enabling a previously inactive product.
+
+#### `DELETE /api/products/[id]`
+Deletes a product (must belong to authenticated user).
+
+#### `POST /api/products/reorder`
+Persists new display order after drag-and-drop.
+
+#### `POST /api/products/checkout`
+Public endpoint (rate-limited). Creates a one-time Stripe Checkout session for a specific product on the creator's profile. Attaches Linkle platform fee metadata (`feeBps`: 200 bps for Free tier creators, 0 bps for Pro/Business).
+```json
+// Body
+{ "productId": "cm..." }
+// Response 200: { "url": "https://checkout.stripe.com/..." }
+```
+
+---
+
 ### User Profile Endpoint
 
 #### `PATCH /api/user/profile`
@@ -1132,6 +1180,15 @@ SMTP_PORT=587
 SMTP_USER="resend"
 SMTP_PASSWORD="your-smtp-password"
 SMTP_FROM="Linkle <noreply@yourdomain.com>"
+
+# Stripe Billing & Checkout
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+STRIPE_PRO_MONTHLY_PRICE_ID="price_pro_monthly"
+STRIPE_PRO_YEARLY_PRICE_ID="price_pro_yearly"
+STRIPE_ENTERPRISE_MONTHLY_PRICE_ID="price_enterprise_monthly"
+STRIPE_ENTERPRISE_YEARLY_PRICE_ID="price_enterprise_yearly"
 ```
 
 ### Installation & Dev Server

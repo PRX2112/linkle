@@ -47,7 +47,7 @@ export function DashboardHeader({
   const profileUrl = typeof window !== "undefined" && username
     ? `${window.location.origin}/p/${username}`
     : username
-      ? `https://linklez.vercel.app/p/${username}`
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/p/${username}`
       : "";
 
   const handleCopyLink = async () => {
@@ -63,7 +63,7 @@ export function DashboardHeader({
   };
 
   const rawPlan = (user.plan || "STARTER").toUpperCase();
-  const isPaid = rawPlan === "PRO" || rawPlan === "ENTERPRISE";
+  const isPaid = rawPlan === "PRO" || rawPlan === "ENTERPRISE" || rawPlan === "BUSINESS";
 
   return (
     <header className="sticky top-0 z-20 w-full h-16 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-gray-200 dark:border-zinc-800 px-4 sm:px-6 md:px-8 flex items-center justify-between transition-colors">
@@ -118,7 +118,7 @@ export function DashboardHeader({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg text-xs font-medium bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-750 transition-colors"
             >
-              <span>linklez.vercel.app/p/{username}</span>
+              <span>{process.env.NEXT_PUBLIC_APP_URL}/p/{username}</span>
               <ExternalLink className="w-3 h-3 text-gray-400" />
             </a>
 

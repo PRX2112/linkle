@@ -39,16 +39,24 @@ export const UserProfileSchema = z.object({
   emailCapturePlaceholder: z.string().max(50, "Email capture placeholder must not exceed 50 characters").optional(),
 });
 
+// Base reusable username validation rule
+export const UsernameSchema = z.string()
+  .min(3, "Username must be at least 3 characters")
+  .max(20, "Username must not exceed 20 characters")
+  .regex(/^[a-z0-9_-]+$/, "Username can only contain lowercase letters, numbers, hyphens, and underscores")
+  .refine(
+    (username) => !RESERVED_USERNAMES.includes(username.toLowerCase()),
+    { message: "This username is reserved and cannot be used" }
+  );
+
+// Claim Username schema (/api/user/claim-username)
+export const ClaimUsernameSchema = z.object({
+  username: UsernameSchema,
+});
+
 // User Settings PATCH schema (/api/user/settings)
 export const UserSettingsSchema = z.object({
-  username: z.string()
-    .min(3, "Username must be at least 3 characters")
-    .max(20, "Username must not exceed 20 characters")
-    .regex(/^[a-z0-9_-]+$/, "Username can only contain lowercase letters, numbers, hyphens, and underscores")
-    .refine(
-      (username) => !RESERVED_USERNAMES.includes(username.toLowerCase()),
-      { message: "This username is reserved and cannot be used" }
-    ),
+  username: UsernameSchema,
   displayName: z.string().max(50, "Display name must not exceed 50 characters").optional(),
 });
 
@@ -63,14 +71,7 @@ export const UserRegisterSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name must not exceed 50 characters"),
   email: z.string().email("Invalid email format").trim().toLowerCase(),
   password: PasswordSchema,
-  username: z.string()
-    .min(3, "Username must be at least 3 characters")
-    .max(20, "Username must not exceed 20 characters")
-    .regex(/^[a-z0-9_-]+$/, "Username can only contain lowercase letters, numbers, hyphens, and underscores")
-    .refine(
-      (username) => !RESERVED_USERNAMES.includes(username.toLowerCase()),
-      { message: "This username is reserved and cannot be used" }
-    ),
+  username: UsernameSchema,
 });
 
 // Generic Visibility Toggle PATCH schema
@@ -276,7 +277,44 @@ export const ImportCommitSchema = z.object({
 
 // Billing Checkout Schema (/api/billing/checkout)
 export const BillingCheckoutSchema = z.object({
-  plan: z.enum(["Pro", "Enterprise", "PRO", "ENTERPRISE"]),
-  interval: z.enum(["monthly", "yearly"]).default("monthly"),
+  plan: z.string().min(1, "Plan name is required"),
+  interval: z.enum(["month", "year", "monthly", "yearly"]).default("month"),
+});
+
+// Product schemas (/api/products)
+export const ProductTypeEnum = z.enum(["TIP", "DIGITAL_FILE", "FLAT_OFFER"]);
+
+export const ProductCreateSchema = z.object({
+  title: z.string().min(1, "Title is required").max(100, "Title must not exceed 100 characters"),
+  description: z.string().max(500, "Description must not exceed 500 characters").nullable().optional(),
+  priceInCents: z.number().int().min(50, "Minimum price is 50 cents ($0.50)").max(10000000, "Maximum price is $100,000"),
+  currency: z.string().default("USD"),
+  type: ProductTypeEnum.default("DIGITAL_FILE"),
+  fileUrl: z.union([z.string().url(), z.string().length(0)]).nullable().optional(),
+  isActive: z.boolean().default(true),
+});
+
+export const ProductUpdateSchema = z.object({
+  title: z.string().min(1, "Title is required").max(100, "Title must not exceed 100 characters").optional(),
+  description: z.string().max(500, "Description must not exceed 500 characters").nullable().optional(),
+  priceInCents: z.number().int().min(50, "Minimum price is 50 cents ($0.50)").max(10000000, "Maximum price is $100,000").optional(),
+  currency: z.string().optional(),
+  type: ProductTypeEnum.optional(),
+  fileUrl: z.union([z.string().url(), z.string().length(0)]).nullable().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const ProductToggleSchema = z.object({
+  isActive: z.boolean({ message: "isActive status is required" }),
+});
+
+export const ProductReorderSchema = z.object({
+  products: z.array(
+    z.object({
+      id: z.string().cuid("Invalid product ID format"),
+      order: z.number().int().nonnegative("Order must be a non-negative integer"),
+    }),
+    { message: "Products array is required" }
+  ),
 });
 

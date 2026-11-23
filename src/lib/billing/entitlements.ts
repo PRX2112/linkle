@@ -155,3 +155,42 @@ export async function verifyLinkLimit(
     maxAllowed: entitlements.maxLinks,
   };
 }
+
+/**
+ * Returns maximum active products allowed per plan tier:
+ * Free = 1, Pro = 5, Business = Infinity
+ */
+export function getMaxActiveProducts(rawPlan?: string | null): number {
+  const plan = normalizePlanTier(rawPlan);
+  if (plan === "ENTERPRISE") return Infinity; // Business
+  if (plan === "PRO") return 5;
+  return 1; // Free / Starter
+}
+
+/**
+ * Server-side check for active products allowance.
+ */
+export async function verifyProductLimit(
+  userId: string
+): Promise<{ allowed: boolean; currentActive: number; maxAllowed: number; plan: PlanTier }> {
+  const effective = await getEffectiveUserPlan(userId);
+  const maxAllowed = getMaxActiveProducts(effective.plan);
+
+  if (maxAllowed === Infinity) {
+    const currentActive = await prisma.product.count({
+      where: { userId, isActive: true },
+    });
+    return { allowed: true, currentActive, maxAllowed: Infinity, plan: effective.plan };
+  }
+
+  const currentActive = await prisma.product.count({
+    where: { userId, isActive: true },
+  });
+
+  return {
+    allowed: currentActive < maxAllowed,
+    currentActive,
+    maxAllowed,
+    plan: effective.plan,
+  };
+}

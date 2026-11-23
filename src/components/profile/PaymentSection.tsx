@@ -13,6 +13,7 @@ interface PaymentSectionProps {
     displayName?: string | null;
     username?: string;
     userId?: string;
+    plan?: string;
 }
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -31,6 +32,7 @@ export default function PaymentSection({
     displayName,
     username,
     userId,
+    plan,
 }: PaymentSectionProps) {
     const visiblePayments = (payments || []).filter((p) => p.isVisible);
     const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -242,6 +244,7 @@ export default function PaymentSection({
                     upiId={activeUpiPayment.value}
                     displayName={payeeName}
                     userId={userId}
+                    plan={plan}
                     onClose={() => setActiveUpiPayment(null)}
                 />
             )}

@@ -99,7 +99,7 @@ export function BillingHistorySection({ invoices }: BillingHistorySectionProps) 
       </div>
 
       {/* Desktop Table (sm:) */}
-      <div className="hidden sm:block overflow-x-auto">
+      <div className="hidden sm:block overflow-x-auto styled-scrollbar">
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b border-gray-100 dark:border-zinc-800 text-gray-400 dark:text-gray-500 uppercase tracking-wider font-semibold text-[10px]">

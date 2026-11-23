@@ -7,6 +7,7 @@ import { Smartphone, Monitor, RefreshCw } from "lucide-react";
 import ProfileHeader from "../profile/ProfileHeader";
 import SocialLinks from "../profile/SocialLinks";
 import BusinessSection from "../profile/BusinessSection";
+import ProductsSection from "../profile/ProductsSection";
 import PaymentSection from "../profile/PaymentSection";
 import ContactSection from "../profile/ContactSection";
 import EmailCaptureSection from "../profile/EmailCaptureSection";
@@ -34,6 +35,7 @@ export default function MobilePreview() {
   }
 
   const rawUser = user as any;
+  const isPaid = Boolean(user.plan && !["free", "starter"].includes(user.plan.toLowerCase()));
   const themePrimary =
     rawUser.themePrimaryColor || user.theme?.primaryColor || "#6366f1";
 
@@ -168,6 +170,14 @@ export default function MobilePreview() {
 
             <BusinessSection links={user.businessLinks} theme={theme} />
 
+            <ProductsSection
+              products={user.products || []}
+              theme={theme}
+              displayName={user.displayName}
+              username={user.username}
+              userId={user.id}
+            />
+
             <PaymentSection
               payments={user.payments}
               theme={theme}
@@ -198,7 +208,8 @@ export default function MobilePreview() {
 
             {!user.businessLinks?.length &&
               !user.socialLinks?.length &&
-              !user.payments?.length && (
+              !user.payments?.length &&
+              !user.products?.length && (
                 <div className="mt-8 px-6 w-full">
                   <div className="p-4 border border-dashed border-gray-200 dark:border-zinc-800 rounded-xl text-center text-xs text-gray-400">
                     Add links in your dashboard
@@ -206,21 +217,23 @@ export default function MobilePreview() {
                 </div>
               )}
 
-            <div className="mt-10 mb-4 text-center flex items-center justify-center gap-1.5">
-              <Image
-                src="/logo.png"
-                alt="Linkle Logo"
-                width={12}
-                height={12}
-                className="object-contain"
-              />
-              <p className="text-[10px] text-gray-400">
-                Powered by{" "}
-                <span className="font-bold text-gray-800 dark:text-gray-200">
-                  Linkle
-                </span>
-              </p>
-            </div>
+            {!isPaid && (
+              <div className="mt-10 mb-4 text-center flex items-center justify-center gap-1.5">
+                <Image
+                  src="/logo.png"
+                  alt="Linkle Logo"
+                  width={12}
+                  height={12}
+                  className="object-contain"
+                />
+                <p className="text-[10px] text-gray-400">
+                  Powered by{" "}
+                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                    Linkle
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

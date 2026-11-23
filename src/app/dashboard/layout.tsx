@@ -25,6 +25,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/login");
   }
 
+  // Redirect users who haven't claimed a username yet (e.g. first Google sign-in)
+  if (!user.username) {
+    redirect("/claim-username");
+  }
+
   return (
     <PreviewProvider initialUser={user}>
       <DashboardShell user={user}>{children}</DashboardShell>

@@ -56,7 +56,7 @@ export default function QRCodeModal({ username, displayName, onClose }: QRCodeMo
         role="dialog"
         aria-modal="true"
         aria-labelledby="qr-modal-title"
-        className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl p-6 sm:p-8 w-full max-w-sm relative max-h-[calc(100dvh-2rem)] overflow-y-auto"
+        className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl p-6 sm:p-8 w-full max-w-sm relative max-h-[calc(100dvh-2rem)] overflow-y-auto styled-scrollbar"
       >
         <button
           onClick={onClose}

@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { plan: rawPlan, interval } = validation.data;
+    const { plan: rawPlan, interval: rawInterval } = validation.data;
     const plan = normalizePlanTier(rawPlan);
 
     if (plan === "STARTER") {
@@ -33,6 +33,10 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const isYearly = rawInterval === "yearly" || rawInterval === "year";
+    const normalizedInterval = isYearly ? "yearly" : "monthly";
+    const stripeInterval: "year" | "month" = isYearly ? "year" : "month";
 
     const planConfig = PLANS[plan];
     const customerId = await getOrCreateStripeCustomer(
@@ -49,10 +53,9 @@ export async function POST(req: NextRequest) {
     // Line items configuration:
     // If a custom Stripe Price ID is configured in environment, use it.
     // Otherwise, generate an on-the-fly recurring price_data object.
-    const customPriceId =
-      interval === "yearly"
-        ? planConfig.priceIds.yearly
-        : planConfig.priceIds.monthly;
+    const customPriceId = isYearly
+      ? planConfig.priceIds.yearly
+      : planConfig.priceIds.monthly;
 
     const isRealPriceId =
       customPriceId &&
@@ -66,7 +69,7 @@ export async function POST(req: NextRequest) {
       lineItems = [{ price: customPriceId, quantity: 1 }];
     } else {
       const amountInCents =
-        (interval === "yearly"
+        (isYearly
           ? planConfig.price.yearly
           : planConfig.price.monthly) * 100;
 
@@ -75,12 +78,12 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Linkle ${planConfig.displayName} (${interval === "yearly" ? "Annual" : "Monthly"})`,
+              name: `Linkle ${planConfig.displayName} (${isYearly ? "Annual" : "Monthly"})`,
               description: planConfig.description,
             },
             unit_amount: amountInCents,
             recurring: {
-              interval: interval === "yearly" ? "year" : "month",
+              interval: stripeInterval,
             },
           },
           quantity: 1,
@@ -96,14 +99,16 @@ export async function POST(req: NextRequest) {
       line_items: lineItems,
       metadata: {
         userId: session.user.id,
-        plan: planConfig.displayName,
-        interval,
+        plan: plan === "ENTERPRISE" ? "business" : "pro",
+        planTier: plan,
+        interval: normalizedInterval,
       },
       subscription_data: {
         metadata: {
           userId: session.user.id,
-          plan: planConfig.displayName,
-          interval,
+          plan: plan === "ENTERPRISE" ? "business" : "pro",
+          planTier: plan,
+          interval: normalizedInterval,
         },
       },
       success_url: `${origin}/dashboard/monetization?success=true&session_id={CHECKOUT_SESSION_ID}`,

@@ -8,16 +8,18 @@ export async function middleware(request: NextRequest) {
   // Determine rate limiting group
   let limitType: "subscribe" | "analytics" | "auth" | null = null;
 
-  if (path === "/api/subscribe") {
+  if (path === "/api/subscribe" || path.startsWith("/api/payments")) {
     limitType = "subscribe";
   } else if (path.startsWith("/api/analytics")) {
     limitType = "analytics";
   } else if (path === "/api/register" || path.startsWith("/api/auth")) {
-    // Exclude NextAuth read-only/helper endpoints to prevent breaking active sessions
+    // Exclude NextAuth read-only/helper and OAuth callback endpoints to prevent breaking active sessions or auth flows
     const excludedAuthPaths = [
       "/api/auth/session",
       "/api/auth/csrf",
       "/api/auth/providers",
+      "/api/auth/callback",
+      "/api/auth/signin",
     ];
     if (!excludedAuthPaths.some(excluded => path.startsWith(excluded))) {
       limitType = "auth";
@@ -65,6 +67,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/api/subscribe",
+    "/api/payments/:path*",
     "/api/analytics/:path*",
     "/api/auth/:path*",
     "/api/register",

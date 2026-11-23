@@ -118,10 +118,10 @@ export async function syncStripeSubscription(
   // Status mapping: determine effective plan
   const isInactive = ["canceled", "unpaid", "incomplete_expired"].includes(status);
   const effectivePlanName = isInactive
-    ? "Starter"
+    ? "free"
     : planTier === "ENTERPRISE"
-    ? "Enterprise"
-    : "Pro";
+    ? "business"
+    : "pro";
 
   // Upsert subscription record and synchronize User model
   const [updatedSub] = await prisma.$transaction([
@@ -161,6 +161,7 @@ export async function syncStripeSubscription(
       where: { id: userId },
       data: {
         plan: effectivePlanName,
+        planRenewsAt: isInactive ? null : currentPeriodEnd,
         stripeCustomerId: customerId,
         stripeSubscriptionId: isInactive ? null : subscriptionId,
         stripePriceId: isInactive ? null : priceId,
@@ -200,7 +201,8 @@ export async function handleSubscriptionDeleted(subscriptionId: string, customer
     prisma.user.update({
       where: { id: user.id },
       data: {
-        plan: "Starter",
+        plan: "free",
+        planRenewsAt: null,
         stripeSubscriptionId: null,
         stripePriceId: null,
         stripeCurrentPeriodEnd: null,

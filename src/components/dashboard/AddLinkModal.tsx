@@ -7,6 +7,7 @@ import {
   Globe,
   CreditCard,
   Mail,
+  ShoppingBag,
   ArrowRight,
   Sparkles,
   Download,
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils";
 interface AddLinkModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectCategory: (category: "social" | "business" | "payments" | "tools") => void;
+  onSelectCategory: (category: "social" | "business" | "payments" | "products" | "tools") => void;
   onOpenTemplates?: () => void;
   onOpenImport?: () => void;
 }
@@ -42,6 +43,13 @@ export function AddLinkModal({
       description: "Showcase your portfolio, product, store, or article with a thumbnail.",
       icon: <Globe className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />,
       bg: "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200/60 dark:border-indigo-900/50",
+    },
+    {
+      id: "products" as const,
+      title: "Digital Product or Flat Tip",
+      description: "Sell downloadable files, services, or accept direct paid tips with Stripe Checkout.",
+      icon: <ShoppingBag className="w-5 h-5 text-purple-600 dark:text-purple-400" />,
+      bg: "bg-purple-50 dark:bg-purple-950/30 border-purple-200/60 dark:border-purple-900/50",
     },
     {
       id: "payments" as const,

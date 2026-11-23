@@ -137,7 +137,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
           </div>
 
           {/* Preview Viewport */}
-          <div className="flex-1 overflow-y-auto p-4 pb-safe flex justify-center items-start">
+          <div className="flex-1 overflow-y-auto no-scrollbar p-4 pb-safe flex justify-center items-start">
             <MobilePreview />
           </div>
         </div>

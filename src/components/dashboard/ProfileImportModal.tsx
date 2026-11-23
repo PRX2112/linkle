@@ -166,7 +166,7 @@ export default function ProfileImportModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto styled-scrollbar animate-in fade-in duration-200">
       <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[90vh]">
         {/* Top Header */}
         <div className="px-6 py-5 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50/50 dark:bg-zinc-900/50">
@@ -200,7 +200,7 @@ export default function ProfileImportModal({
         )}
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-5">
+        <div className="p-6 overflow-y-auto styled-scrollbar flex-1 space-y-5">
           {/* ================= STEP 1: INPUT ================= */}
           {step === "input" && (
             <div className="space-y-4">
@@ -296,7 +296,7 @@ export default function ProfileImportModal({
               </div>
 
               {/* Suggestions List */}
-              <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+              <div className="space-y-2.5 max-h-[50vh] overflow-y-auto styled-scrollbar pr-1">
                 {suggestions.map((item) => (
                   <div
                     key={item.id}

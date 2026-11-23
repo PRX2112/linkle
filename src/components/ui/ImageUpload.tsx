@@ -218,8 +218,8 @@ export default function ImageUpload({
 
           {value ? (
             /* Current Image Preview & Controls */
-            <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
-              <div className={`relative overflow-hidden bg-gray-100 dark:bg-zinc-800 shrink-0 shadow-sm ${aspectClass}`}>
+            <div className="  gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800  margin-bottom: 5pt">
+              <div className={`relative overflow-hidden bg-gray-100 dark:bg-zinc-800 shrink-0  mb-3 shadow-sm ${aspectClass}`}>
                 <img
                   src={value}
                   alt="Preview"

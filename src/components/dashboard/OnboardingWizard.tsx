@@ -214,7 +214,7 @@ export default function OnboardingWizard({
   const selectedTemplate = PROFILE_TEMPLATES[selectedTemplateId] || PROFILE_TEMPLATES.creator;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto styled-scrollbar animate-in fade-in duration-200">
       <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden my-8 flex flex-col max-h-[92vh]">
         {/* Top Header & Progress */}
         <div className="px-6 py-5 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50/50 dark:bg-zinc-900/50">
@@ -291,7 +291,7 @@ export default function OnboardingWizard({
         )}
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-6 overflow-y-auto styled-scrollbar flex-1 space-y-6">
           {/* ================= STEP 1: CHOOSE TEMPLATE ================= */}
           {currentStep === 1 && (
             <div className="space-y-6">

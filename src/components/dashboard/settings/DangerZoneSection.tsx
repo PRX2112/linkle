@@ -64,8 +64,8 @@ export function DangerZoneSection({ hasActiveSubscription }: DangerZoneSectionPr
 
       {/* Confirmation Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
-          <div className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto my-auto rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto styled-scrollbar animate-in fade-in duration-150">
+          <div className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto styled-scrollbar my-auto rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 shadow-xl space-y-5 animate-in zoom-in-95 duration-150">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5 text-red-600 dark:text-red-400">
                 <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/50">

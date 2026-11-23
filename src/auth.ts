@@ -15,20 +15,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      profile(profile) {
-        // Generate a unique safe username fallback based on email prefix + 4-char random string
-        const emailPrefix = profile.email ? profile.email.split("@")[0].toLowerCase().replace(/[^a-z0-9_-]/g, "") : "user";
-        const uniqueSuffix = Math.random().toString(36).substring(2, 6);
-        const uniqueUsername = `${emailPrefix}_${uniqueSuffix}`;
-
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture,
-          username: uniqueUsername,
-        };
-      }
+      allowDangerousEmailAccountLinking: true,
     })
   );
 }
@@ -104,26 +91,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       // Invalidate active session if user has a password signature and their password has changed or account deleted
-      if (token.id && token.pwdSig) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { password: true, username: true }
-        });
+      if (token.id) {
+        if (token.pwdSig) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { password: true, username: true }
+          });
 
-        // Account was deleted or has no password
-        if (!dbUser || !dbUser.password) {
-          return null as any;
-        }
+          // Account was deleted or has no password
+          if (!dbUser || !dbUser.password) {
+            return null as any;
+          }
 
-        const currentSig = crypto.createHash("sha256").update(dbUser.password).digest("hex").slice(0, 16);
-        // Password was changed or reset -> immediately invalidate session
-        if (token.pwdSig !== currentSig) {
-          return null as any;
-        }
+          const currentSig = crypto.createHash("sha256").update(dbUser.password).digest("hex").slice(0, 16);
+          // Password was changed or reset -> immediately invalidate session
+          if (token.pwdSig !== currentSig) {
+            return null as any;
+          }
 
-        // Keep username synchronized if updated
-        if (dbUser.username && token.username !== dbUser.username) {
-          token.username = dbUser.username;
+          // Keep username synchronized if updated
+          if (dbUser.username && token.username !== dbUser.username) {
+            token.username = dbUser.username;
+          }
+        } else {
+          // OAuth account: keep username synchronized once claimed
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { username: true }
+          });
+
+          if (!dbUser) {
+            return null as any;
+          }
+
+          if (dbUser.username && token.username !== dbUser.username) {
+            token.username = dbUser.username;
+          }
         }
       }
 

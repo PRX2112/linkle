@@ -93,12 +93,13 @@ model User {
   locationShowDirectionsBtn  Boolean @default(true)
   locationIsVisible          Boolean @default(true)
 
-  // Billing fields
-  plan                   String    @default("Starter")
+  // Billing fields (free | pro | business)
+  plan                   String    @default("free")
   stripeCustomerId       String?   @unique
   stripeSubscriptionId   String?   @unique
   stripePriceId          String?
   stripeCurrentPeriodEnd DateTime?
+  planRenewsAt           DateTime?
 
   accounts      Account[]
   sessions      Session[]
@@ -112,6 +113,8 @@ model User {
   clickEvents    ClickEvent[]
   usernameHistory UsernameHistory[]
   analyticsEvents AnalyticsEvent[]
+  paymentEvents  PaymentEvent[]
+  products       Product[]
   subscription    Subscription?
 
   createdAt     DateTime  @default(now())
@@ -301,5 +304,53 @@ model WebhookEvent {
   payload     Json?
 
   @@index([type])
+}
+
+model PaymentEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Float?
+  feeBps    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+enum ProductType {
+  TIP
+  DIGITAL_FILE
+  FLAT_OFFER
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  priceInCents Int
+  currency     String        @default("USD")
+  type         ProductType   @default(DIGITAL_FILE)
+  fileUrl      String?
+  isActive     Boolean       @default(true)
+  order        Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  sales        ProductSale[]
+
+  @@index([userId, order])
+}
+
+model ProductSale {
+  id              String   @id @default(cuid())
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  amount          Int
+  feeAmount       Int
+  stripeSessionId String?
+  createdAt       DateTime @default(now())
+
+  @@index([productId, createdAt])
 }
 

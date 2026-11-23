@@ -200,11 +200,105 @@ body {
         box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
     }
 
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
+    .no-scrollbar::-webkit-scrollbar,
+    .scrollbar-none::-webkit-scrollbar,
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
     }
-    .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+    .no-scrollbar,
+    .scrollbar-none,
+    .hide-scrollbar {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
     }
+
+    /* Sleek compact scrollbar for dropdowns, selects, modals, and tables */
+    .styled-scrollbar::-webkit-scrollbar,
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    .styled-scrollbar::-webkit-scrollbar-track,
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .styled-scrollbar::-webkit-scrollbar-thumb,
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.35);
+        border-radius: 9999px;
+    }
+    .styled-scrollbar::-webkit-scrollbar-thumb:hover,
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(156, 163, 175, 0.65);
+    }
+    .dark .styled-scrollbar::-webkit-scrollbar-thumb,
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: rgba(161, 161, 170, 0.25);
+    }
+    .dark .styled-scrollbar::-webkit-scrollbar-thumb:hover,
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(161, 161, 170, 0.55);
+    }
+    .styled-scrollbar,
+    .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(156, 163, 175, 0.35) transparent;
+    }
+    .dark .styled-scrollbar,
+    .dark .custom-scrollbar {
+        scrollbar-color: rgba(161, 161, 170, 0.25) transparent;
+    }
+}
+
+/* ==========================================================================
+   Universal Scrollbar Redesign (All Browsers & Operating Systems)
+   Transforms ugly, bulky default desktop scrollbars into sleek floating pills
+   ========================================================================== */
+
+/* Webkit / Chromium / Safari / Edge */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.35);
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.65);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background-color: rgba(161, 161, 170, 0.25);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(161, 161, 170, 0.55);
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Firefox Universal Modern Thin Scrollbars */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.35) transparent;
+}
+
+.dark * {
+    scrollbar-color: rgba(161, 161, 170, 0.25) transparent;
 }

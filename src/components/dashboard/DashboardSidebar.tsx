@@ -44,7 +44,7 @@ export default function DashboardSidebar({
   const pathname = usePathname();
 
   const rawPlan = (user.plan || "STARTER").toUpperCase();
-  const isPaid = rawPlan === "PRO" || rawPlan === "ENTERPRISE";
+  const isPaid = rawPlan === "PRO" || rawPlan === "ENTERPRISE" || rawPlan === "BUSINESS";
 
   const renderNavItem = (item: DashboardNavItem, inMobile = false) => {
     const isActive = item.exact
@@ -204,7 +204,7 @@ export default function DashboardSidebar({
       <div className="pt-4 border-t border-gray-100 dark:border-zinc-800/80 px-1 space-y-3">
         {/* Compact Plan Card (Hidden in collapsed desktop) */}
         {(!isCollapsed || inMobile) && (
-          <div className="p-3 rounded-xl bg-gray-50 dark:bg-zinc-850 border border-gray-200/70 dark:border-zinc-800/80 text-xs">
+          <div className="p-3 rounded-xl border border-2 border-red-800/70 dark:border-red-800/80 text-xs">
             <div className="flex items-center justify-between mb-1.5">
               <span className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -225,7 +225,6 @@ export default function DashboardSidebar({
                 onClick={onCloseMobile}
                 className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
               >
-                <Sparkles className="w-3 h-3" />
                 Upgrade for unlimited & Pro tools &rarr;
               </Link>
             )}

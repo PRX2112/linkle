@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { CurrentPlanHero } from "@/components/dashboard/billing/CurrentPlanHero";
 import { EntitlementsUsageSection } from "@/components/dashboard/billing/EntitlementsUsageSection";
+import { UpiFeeWidget } from "@/components/dashboard/billing/UpiFeeWidget";
 import { PaymentMethodSection } from "@/components/dashboard/billing/PaymentMethodSection";
 import { BillingHistorySection } from "@/components/dashboard/billing/BillingHistorySection";
 import { UpgradePlansSection } from "@/components/dashboard/billing/UpgradePlansSection";
@@ -43,6 +44,11 @@ interface SubscriptionPayload {
     pdfUrl: string | null;
     hostedUrl: string | null;
   }>;
+  upiFee?: {
+    rate: string;
+    feeBps: number;
+    monthlyIntentsCount: number;
+  };
 }
 
 export default function MonetizationPage() {
@@ -224,6 +230,17 @@ export default function MonetizationPage() {
               plan={subData.plan}
               entitlements={subData.entitlements || ENTITLEMENTS.STARTER}
               usage={subData.usage}
+              onUpgradeClick={scrollToUpgrade}
+            />
+          </section>
+
+          {/* UPI Platform Fees & Payment Activity */}
+          <section aria-labelledby="upi-fees-heading">
+            <UpiFeeWidget
+              feeRate={subData.upiFee?.rate || (subData.isPaidActive ? "0%" : "2.0%")}
+              feeBps={subData.upiFee?.feeBps ?? (subData.isPaidActive ? 0 : 200)}
+              monthlyIntentsCount={subData.upiFee?.monthlyIntentsCount ?? 0}
+              isPaidActive={subData.isPaidActive}
               onUpgradeClick={scrollToUpgrade}
             />
           </section>

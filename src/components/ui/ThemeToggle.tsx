@@ -10,14 +10,27 @@ export default function ThemeToggle() {
 
     useEffect(() => {
         setMounted(true);
-        const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        const initialTheme = savedTheme || systemTheme;
+        const updateTheme = () => {
+            const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+            const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            const currentTheme = savedTheme || systemTheme;
 
-        setTheme(initialTheme);
-        if (initialTheme === "dark") {
-            document.documentElement.classList.add("dark");
-        }
+            setTheme(currentTheme);
+            if (currentTheme === "dark") {
+                document.documentElement.classList.add("dark");
+            } else {
+                document.documentElement.classList.remove("dark");
+            }
+        };
+
+        updateTheme();
+        window.addEventListener("linkle-theme-change", updateTheme);
+        window.addEventListener("storage", updateTheme);
+
+        return () => {
+            window.removeEventListener("linkle-theme-change", updateTheme);
+            window.removeEventListener("storage", updateTheme);
+        };
     }, []);
 
     const toggleTheme = () => {
@@ -30,6 +43,8 @@ export default function ThemeToggle() {
         } else {
             document.documentElement.classList.remove("dark");
         }
+
+        window.dispatchEvent(new Event("linkle-theme-change"));
     };
 
     if (!mounted) {

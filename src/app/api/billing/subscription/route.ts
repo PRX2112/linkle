@@ -15,7 +15,10 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [effective, user, socialCount, businessCount] = await Promise.all([
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [effective, user, socialCount, businessCount, monthlyPaymentIntents] = await Promise.all([
     getEffectiveUserPlan(session.user.id),
     prisma.user.findUnique({
       where: { id: session.user.id },
@@ -30,6 +33,12 @@ export async function GET() {
     }),
     prisma.socialLink.count({ where: { userId: session.user.id } }),
     prisma.businessLink.count({ where: { userId: session.user.id } }),
+    prisma.paymentEvent.count({
+      where: {
+        userId: session.user.id,
+        createdAt: { gte: startOfMonth },
+      },
+    }),
   ]);
 
   if (!user) {
@@ -100,6 +109,10 @@ export async function GET() {
     }
   }
 
+  const isPaid = effective.isPaidActive || Boolean(user.plan && !["free", "starter"].includes(user.plan.toLowerCase()));
+  const feeBps = isPaid ? 0 : 200;
+  const feeRate = isPaid ? "0%" : "2.0%";
+
   return NextResponse.json({
     plan: effective.plan,
     rawPlan: user.plan,
@@ -116,6 +129,11 @@ export async function GET() {
         used: totalLinks,
         maxAllowed: entitlements.maxLinks,
       },
+    },
+    upiFee: {
+      rate: feeRate,
+      feeBps,
+      monthlyIntentsCount: monthlyPaymentIntents,
     },
     paymentMethod,
     invoices,

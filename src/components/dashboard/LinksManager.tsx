@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { usePreview } from "./PreviewContext";
 import {
   Plus,
@@ -15,7 +16,9 @@ import {
   Copy,
   Check,
   ExternalLink,
+  ArrowUpRight,
   SlidersHorizontal,
+  ShoppingBag,
 } from "lucide-react";
 import QRCodeModal from "./QRCodeModal";
 import LinkEditModal from "./LinkEditModal";
@@ -24,6 +27,7 @@ import ProfileImportModal from "./ProfileImportModal";
 import { AddLinkModal } from "./AddLinkModal";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { LinkItemRow } from "./LinkItemRow";
+import ProductsManagerTab from "./ProductsManagerTab";
 import ImageUpload from "@/components/ui/ImageUpload";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -129,6 +133,7 @@ interface UserWithLinks {
   id: string;
   username?: string | null;
   displayName?: string | null;
+  plan?: string | null;
   onboardingCompleted?: boolean;
   selectedTemplate?: string | null;
   socialLinks: SocialLink[];
@@ -145,6 +150,7 @@ interface UserWithLinks {
   emailCaptureTitle?: string;
   emailCapturePlaceholder?: string;
   capturedEmails?: { id: string; email: string; createdAt: Date | string }[];
+  products?: any[];
   clicksMap?: Record<string, number>;
 }
 
@@ -174,7 +180,7 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"social" | "business" | "payments" | "tools">("social");
+  const [activeTab, setActiveTab] = useState<"social" | "business" | "payments" | "products" | "tools">("social");
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const [copiedProfile, setCopiedProfile] = useState(false);
@@ -196,6 +202,49 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
     title: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const userPlan = (user.plan || "free").toLowerCase();
+  const isPaidPlan = !["free", "starter"].includes(userPlan);
+
+  const handleExportCsv = async () => {
+    if (!isPaidPlan) {
+      router.push("/dashboard/monetization");
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      const res = await fetch("/api/subscribers/export");
+
+      if (res.status === 403) {
+        toast.error("CSV export requires a Pro or Business plan.");
+        router.push("/dashboard/monetization");
+        return;
+      }
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to export subscriber CSV.");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `linkle-subscribers-${user.username || "user"}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Subscriber list downloaded successfully.");
+    } catch (err: any) {
+      toast.error(err.message || "Could not download subscriber CSV.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const { updatePreviewUser } = usePreview();
 
@@ -213,6 +262,8 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
 
   const [paymentLinks, setPaymentLinks] = useState(user.paymentLinks);
   const [newPayment, setNewPayment] = useState({ platform: "upi", handle: "" });
+
+  const [products, setProducts] = useState(user.products || []);
 
   const [emailCapture, setEmailCapture] = useState({
     enabled: user.emailCaptureEnabled || false,
@@ -264,21 +315,22 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
       socialLinks: socialLinks as any,
       businessLinks: businessLinks as any,
       payments: paymentLinks as any,
+      products: products as any,
       emailCaptureEnabled: emailCapture.enabled,
       emailCaptureTitle: emailCapture.title,
       emailCapturePlaceholder: emailCapture.placeholder,
     });
-  }, [socialLinks, businessLinks, paymentLinks, emailCapture, updatePreviewUser]);
+  }, [socialLinks, businessLinks, paymentLinks, products, emailCapture, updatePreviewUser]);
 
   // Overall counts summary
   const summaryStats = useMemo(() => {
     const all = [...socialLinks, ...businessLinks, ...paymentLinks];
-    const total = all.length;
-    const visible = all.filter((l) => l.isVisible).length;
+    const total = all.length + products.length;
+    const visible = all.filter((l) => l.isVisible).length + products.filter((p) => p.isActive).length;
     const featured = all.filter((l) => (l as any).featured).length;
     const scheduled = all.filter((l) => l.startDate || l.endDate).length;
     return { total, visible, featured, scheduled };
-  }, [socialLinks, businessLinks, paymentLinks]);
+  }, [socialLinks, businessLinks, paymentLinks, products]);
 
   // Drag and drop handlers
   const handleDragEndSocial = async (event: DragEndEvent) => {
@@ -513,11 +565,13 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
   const tabs = [
     { id: "social" as const, label: "Social", count: socialLinks.length },
     { id: "business" as const, label: "Links", count: businessLinks.length },
+    { id: "products" as const, label: "Products", count: products.length },
     { id: "payments" as const, label: "Payments", count: paymentLinks.length },
     { id: "tools" as const, label: "Tools", count: emailCapture.enabled ? 1 : 0 },
   ];
 
-  const totalLinkCount = socialLinks.length + businessLinks.length + paymentLinks.length;
+  const totalLinkCount =
+    socialLinks.length + businessLinks.length + paymentLinks.length + products.length;
 
   return (
     <div className="space-y-6">
@@ -696,6 +750,16 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
               }}
             >
               + Add Payment
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setActiveTab("products");
+              }}
+            >
+              + Add Product
             </Button>
           </div>
         </div>
@@ -1062,7 +1126,17 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
         </div>
       )}
 
-      {/* 8. TAB: Tools & Email Capture */}
+      {/* 8. TAB: Products */}
+      {activeTab === "products" && (
+        <ProductsManagerTab
+          products={products}
+          setProducts={setProducts}
+          userPlan={user.plan}
+          onStatusMsg={showStatus}
+        />
+      )}
+
+      {/* 9. TAB: Tools & Email Capture */}
       {activeTab === "tools" && (
         <div className="space-y-4">
           <Card variant="default" className="p-5 sm:p-6 space-y-4">
@@ -1142,37 +1216,62 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
 
                 {/* Subscribers List */}
                 <div className="pt-3 border-t border-gray-100 dark:border-zinc-800">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between gap-3 mb-2">
                     <h4 className="text-xs font-semibold text-gray-900 dark:text-gray-100">
                       Collected Emails ({capturedEmails.length})
                     </h4>
-                    {capturedEmails.length > 0 && (
-                      <button
+                    {isPaidPlan ? (
+                      <Button
                         type="button"
-                        onClick={() => {
-                          const csvContent =
-                            "data:text/csv;charset=utf-8,Email,Date\n" +
-                            capturedEmails
-                              .map(
-                                (e) =>
-                                  `${e.email},${new Date(e.createdAt).toLocaleDateString()}`
-                              )
-                              .join("\n");
-                          const encodedUri = encodeURI(csvContent);
-                          const link = document.createElement("a");
-                          link.setAttribute("href", encodedUri);
-                          link.setAttribute(
-                            "download",
-                            `${user.username || "user"}_subscribers.csv`
-                          );
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                        }}
-                        className="text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportCsv}
+                        disabled={capturedEmails.length === 0 || isExporting}
+                        isLoading={isExporting}
+                        className="gap-1.5 h-8 text-xs font-semibold"
+                        title={
+                          capturedEmails.length === 0
+                            ? "No subscribers collected yet"
+                            : "Export subscriber list as CSV"
+                        }
                       >
-                        Download CSV
-                      </button>
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Export CSV</span>
+                      </Button>
+                    ) : (
+                      <div className="relative group inline-block">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          className="gap-1.5 h-8 text-xs font-semibold opacity-60 cursor-not-allowed border-dashed"
+                          aria-label="Export CSV requires Pro or Business plan"
+                        >
+                          <Download className="w-3.5 h-3.5 text-gray-400" />
+                          <span>Export CSV</span>
+                          <span className="ml-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+                            Pro
+                          </span>
+                        </Button>
+                        {/* Tooltip / Upsell pointing to Monetization */}
+                        <div className="absolute right-0 top-full mt-1.5 hidden group-hover:flex z-30 w-56 flex-col gap-1 p-2.5 rounded-lg bg-gray-900 dark:bg-zinc-850 text-white shadow-xl text-[11px] leading-tight border border-gray-700 dark:border-zinc-700 animate-in fade-in duration-150">
+                          <div className="flex items-center gap-1 font-semibold text-brand-300">
+                            <Sparkles className="w-3 h-3" />
+                            <span>Pro & Business Feature</span>
+                          </div>
+                          <p className="text-gray-300 text-[10px]">
+                            Export your audience emails to CSV for newsletter campaigns.
+                          </p>
+                          <Link
+                            href="/dashboard/monetization"
+                            className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-brand-400 hover:text-brand-300 underline"
+                          >
+                            <span>Upgrade in Monetization</span>
+                            <ArrowUpRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
                     )}
                   </div>
 
@@ -1186,7 +1285,7 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto styled-scrollbar pr-1">
                       {capturedEmails.map((item) => (
                         <div
                           key={item.id}
@@ -1223,7 +1322,9 @@ export default function LinksManager({ user }: { user: UserWithLinks }) {
                   ? "add-business-section"
                   : cat === "payments"
                     ? "add-payment-section"
-                    : undefined;
+                    : cat === "products"
+                      ? "add-product-section"
+                      : undefined;
             if (sectionId) {
               document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
             }

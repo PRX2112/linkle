@@ -58,7 +58,7 @@ export function Modal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto styled-scrollbar"
     >
       {/* Backdrop */}
       <div
@@ -105,7 +105,7 @@ export function Modal({
         )}
 
         {/* Content Body with internal scrolling */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1">{children}</div>
+        <div className="p-4 sm:p-6 overflow-y-auto styled-scrollbar flex-1">{children}</div>
       </div>
     </div>
   );

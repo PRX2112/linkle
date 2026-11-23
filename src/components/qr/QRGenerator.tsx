@@ -37,7 +37,7 @@ export default function QRGenerator({ url, size = 200, userId }: QRGeneratorProp
     };
 
     return (
-        <div className="flex flex-col items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800">
+        <div className="flex flex-col items-center gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm">
             <div className="bg-white p-2 rounded-xl">
                 <QRCodeSVG
                     id="profile-qr-code"

@@ -73,6 +73,14 @@ export default function EmailCaptureSection({
         setStatus("loading");
         setErrorMsg("");
 
+        if (isPreview) {
+            setTimeout(() => {
+                setStatus("success");
+                setEmail("");
+            }, 500);
+            return;
+        }
+
         try {
             const res = await fetch("/api/subscribe", {
                 method: "POST",

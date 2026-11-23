@@ -11,6 +11,7 @@ interface UpiPayModalProps {
   upiId: string;
   displayName?: string | null;
   userId?: string;
+  plan?: string;
   onClose: () => void;
 }
 
@@ -18,6 +19,7 @@ export default function UpiPayModal({
   upiId,
   displayName,
   userId,
+  plan,
   onClose,
 }: UpiPayModalProps) {
   const [copied, setCopied] = useState(false);
@@ -25,12 +27,27 @@ export default function UpiPayModal({
   const [downloading, setDownloading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  const isPaid = Boolean(plan && !["free", "starter"].includes(plan.toLowerCase()));
   const cleanUpi = cleanUpiId(upiId);
   const payeeName = displayName && displayName.trim().length > 0 ? displayName.trim() : "Creator";
   const isValid = isValidUpiId(cleanUpi);
 
   // Generate standard UPI payment URI
   const upiUri = generateUpiUri({ upiId: cleanUpi, displayName: payeeName });
+
+  // Log payment intent
+  const logPaymentIntent = useCallback(async () => {
+    if (!userId) return;
+    try {
+      await fetch("/api/payments/log-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+    } catch (err) {
+      console.error("Error logging payment intent:", err);
+    }
+  }, [userId]);
 
   // Detect mobile device
   useEffect(() => {
@@ -73,6 +90,7 @@ export default function UpiPayModal({
 
   // Download high-resolution branded QR code PNG
   const handleDownload = useCallback(() => {
+    logPaymentIntent();
     if (userId) {
       tracker.qrDownload(userId, "upi_qr");
     }
@@ -125,7 +143,7 @@ export default function UpiPayModal({
       console.error("QR download error:", err);
       setDownloading(false);
     }
-  }, [payeeName, cleanUpi, userId]);
+  }, [payeeName, cleanUpi, userId, logPaymentIntent]);
 
   // Share payment link
   const handleShare = useCallback(async () => {
@@ -160,7 +178,7 @@ export default function UpiPayModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto styled-scrollbar">
         {/* Backdrop click to dismiss */}
         <div className="absolute inset-0" onClick={onClose} />
 
@@ -172,7 +190,7 @@ export default function UpiPayModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 8 }}
           transition={{ duration: 0.18, ease: "easeOut" }}
-          className="relative z-10 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-5 sm:p-6 w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto border border-gray-200 dark:border-zinc-800 text-left my-auto space-y-4"
+          className="relative z-10 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-5 sm:p-6 w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto styled-scrollbar border border-gray-200 dark:border-zinc-800 text-left my-auto space-y-4"
         >
           {/* Header */}
           <div className="flex items-start justify-between gap-3">
@@ -193,8 +211,19 @@ export default function UpiPayModal({
             </button>
           </div>
 
+          {/* Free-Tier Fee Notice */}
+          {!isPaid && (
+            <p className="text-[11px] font-medium text-amber-700 dark:text-amber-300/90 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/40 rounded-lg py-1.5 px-3 text-center">
+              A 2% Linkle service fee applies — removed on Pro
+            </p>
+          )}
+
           {/* High-Contrast QR Code Card */}
-          <div className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-200 shadow-2xs">
+          <div
+            onClick={logPaymentIntent}
+            className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-200 shadow-2xs cursor-pointer"
+            title="Scan or click QR to pay"
+          >
             <div className="p-1 bg-white rounded-lg">
               <QRCodeSVG
                 id="linkle-upi-qr-svg"
@@ -245,6 +274,7 @@ export default function UpiPayModal({
             <a
               href={upiUri}
               onClick={() => {
+                logPaymentIntent();
                 if (userId) {
                   tracker.upiOpen(userId, cleanUpi);
                 }

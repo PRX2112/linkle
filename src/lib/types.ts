@@ -79,6 +79,20 @@ export interface ContactAction {
     featured?: boolean;
 }
 
+export type ProductType = "TIP" | "DIGITAL_FILE" | "FLAT_OFFER";
+
+export interface ProductInfo {
+    id: string;
+    title: string;
+    description?: string | null;
+    priceInCents: number;
+    currency: string;
+    type: ProductType;
+    fileUrl?: string | null;
+    isActive: boolean;
+    order: number;
+}
+
 export interface UserTheme {
     primaryColor: string;
     backgroundColor: string; // "light" | "dark" | hex
@@ -99,9 +113,11 @@ export interface UserProfile {
     location?: LocationInfo;
     payments: PaymentOption[];
     contactActions: ContactAction[];
+    products?: ProductInfo[];
     emailCaptureEnabled?: boolean;
     emailCaptureTitle?: string;
     emailCapturePlaceholder?: string;
     onboardingCompleted?: boolean;
     selectedTemplate?: string | null;
+    plan?: string;
 }

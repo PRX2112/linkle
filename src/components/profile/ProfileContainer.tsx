@@ -9,6 +9,7 @@ import BusinessSection from "./BusinessSection";
 import LocationSection from "./LocationSection";
 import PaymentSection from "./PaymentSection";
 import ContactSection from "./ContactSection";
+import ProductsSection from "./ProductsSection";
 import EmailCaptureSection from "./EmailCaptureSection";
 import QRGenerator from "../qr/QRGenerator";
 import ThemeToggle from "../ui/ThemeToggle";
@@ -22,6 +23,7 @@ interface ProfileContainerProps {
 }
 
 export default function ProfileContainer({ user }: ProfileContainerProps) {
+    const isPaid = Boolean(user.plan && !["free", "starter"].includes(user.plan.toLowerCase()));
     const [showQR, setShowQR] = useState(false);
     const [showShareToast, setShowShareToast] = useState(false);
 
@@ -222,7 +224,7 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
                             transition={{ duration: 0.18 }}
-                            className="relative z-10 bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-2xl border border-gray-200 dark:border-zinc-800 max-w-xs w-full max-h-[calc(100dvh-2rem)] overflow-y-auto my-auto text-center space-y-4"
+                            className="relative z-10 bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-2xl border border-gray-200 dark:border-zinc-800 max-w-xs w-full max-h-[calc(100dvh-2rem)] overflow-y-auto styled-scrollbar my-auto text-center space-y-4"
                         >
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold uppercase tracking-wider text-[var(--user-primary)]">
@@ -230,14 +232,14 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
                                 </span>
                                 <button
                                     onClick={() => setShowQR(false)}
-                                    className="min-w-[36px] min-h-[36px] p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30"
+                                    className="min-w-[36px] min-h-[36px] p-2 rounded-lg text-P-400 hover:text-P-600 dark:hover:text-P-200 hover:bg-P-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30"
                                     aria-label="Close QR dialog"
                                 >
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
 
-                            <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-2xs inline-block">
+                            <div className="bg-white rounded-xl border border-2 border-purple-600 shadow-2xl shadow-purple-800/30 inline-block">
                                 <QRGenerator url={profileUrl} userId={user.id} />
                             </div>
 
@@ -285,6 +287,15 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
                     theme={user.theme}
                 />
 
+                {/* 4.5 Products & Offers (Digital Files, Tips, Flat Offers) */}
+                <ProductsSection
+                    products={user.products}
+                    theme={user.theme}
+                    displayName={user.displayName}
+                    username={user.username}
+                    userId={user.id}
+                />
+
                 {/* 5. Payments (Linkle Pay UPI + External) */}
                 <PaymentSection
                     payments={user.payments}
@@ -292,6 +303,7 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
                     displayName={user.displayName}
                     username={user.username}
                     userId={user.id}
+                    plan={user.plan}
                 />
 
                 {/* 6. Email Capture Lead Generation */}
@@ -310,22 +322,24 @@ export default function ProfileContainer({ user }: ProfileContainerProps) {
                 />
             </main>
 
-            {/* 8. Linkle Branding Footer */}
-            <footer className="mt-12 text-center flex items-center justify-center">
-                <Link
-                    href="/"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xs border border-gray-200/60 dark:border-zinc-800 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                    <Image
-                        src="/logo.png"
-                        alt="Linkle"
-                        width={14}
-                        height={14}
-                        className="object-contain opacity-80"
-                    />
-                    <span>Powered by <strong className="text-gray-800 dark:text-gray-200">Linkle</strong></span>
-                </Link>
-            </footer>
+            {/* 8. Linkle Branding Footer (Hidden on paid plans: Pro, Business/Enterprise) */}
+            {!isPaid && (
+                <footer className="mt-12 text-center flex items-center justify-center">
+                    <Link
+                        href="/"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xs border border-gray-200/60 dark:border-zinc-800 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    >
+                        <Image
+                            src="/logo.png"
+                            alt="Linkle"
+                            width={14}
+                            height={14}
+                            className="object-contain opacity-80"
+                        />
+                        <span>Powered by <strong className="text-gray-800 dark:text-gray-200">Linkle</strong></span>
+                    </Link>
+                </footer>
+            )}
         </div>
     );
 }

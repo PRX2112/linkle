@@ -13,6 +13,8 @@ import {
   LogOut,
   ChevronDown,
   Sparkles,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
@@ -34,8 +36,48 @@ interface UserMenuProps {
 export function UserMenu({ user, isCollapsed = false }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const { toast } = useToast();
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme) {
+        setIsDark(savedTheme === "dark");
+      } else {
+        const isDarkSys =
+          document.documentElement.classList.contains("dark") ||
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setIsDark(isDarkSys);
+      }
+    };
+
+    checkTheme();
+    window.addEventListener("linkle-theme-change", checkTheme);
+    window.addEventListener("storage", checkTheme);
+
+    return () => {
+      window.removeEventListener("linkle-theme-change", checkTheme);
+      window.removeEventListener("storage", checkTheme);
+    };
+  }, []);
+
+  const toggleTheme = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newDark = !isDark;
+    setIsDark(newDark);
+
+    if (newDark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+
+    window.dispatchEvent(new Event("linkle-theme-change"));
+  };
 
   const username = user.username?.trim();
   const profileUrl = typeof window !== "undefined" && username
@@ -84,8 +126,8 @@ export function UserMenu({ user, isCollapsed = false }: UserMenuProps) {
   })();
 
   const rawPlan = (user.plan || "STARTER").toUpperCase();
-  const isPaid = rawPlan === "PRO" || rawPlan === "ENTERPRISE";
-  const planLabel = rawPlan === "ENTERPRISE" ? "Enterprise" : rawPlan === "PRO" ? "Pro" : "Free";
+  const isPaid = rawPlan === "PRO" || rawPlan === "ENTERPRISE" || rawPlan === "BUSINESS";
+  const planLabel = (rawPlan === "ENTERPRISE" || rawPlan === "BUSINESS") ? "Enterprise" : rawPlan === "PRO" ? "Pro" : "Free";
 
   return (
     <div ref={menuRef} className="relative w-full">
@@ -184,13 +226,13 @@ export function UserMenu({ user, isCollapsed = false }: UserMenuProps) {
                 rel="noopener noreferrer"
                 role="menuitem"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="flex flex-col items-start justify-between px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <ExternalLink className="w-4 h-4 text-gray-400" />
                   View public profile
                 </span>
-                <span className="text-xs text-gray-400">linklez.vercel.app/p/{username}</span>
+                <span className="text-xs text-gray-400 overflow-hidden text-ellipsis">{process.env.NEXT_PUBLIC_APP_URL}/p/{username}</span>
               </a>
 
               <button
@@ -239,6 +281,40 @@ export function UserMenu({ user, isCollapsed = false }: UserMenuProps) {
               <Settings className="w-4 h-4 text-gray-400" />
               <span>Settings</span>
             </Link>
+          </div>
+
+          <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+
+          {/* Theme Toggle */}
+          <div className="py-1">
+            <button
+              type="button"
+              role="menuitem"
+              onClick={toggleTheme}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white transition-colors text-left"
+            >
+              <span className="flex items-center gap-2.5">
+                {isDark ? (
+                  <Sun className="w-4 h-4 text-amber-500" />
+                ) : (
+                  <Moon className="w-4 h-4 text-gray-400" />
+                )}
+                <span>Theme</span>
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-zinc-400 font-medium">
+                  {isDark ? "Dark" : "Light"}
+                </span>
+                <div
+                  className={cn(
+                    "w-7 h-4 rounded-full transition-colors relative p-0.5 flex items-center",
+                    isDark ? "bg-brand-600 justify-end" : "bg-gray-300 dark:bg-zinc-700 justify-start"
+                  )}
+                >
+                  <div className="w-3 h-3 rounded-full bg-white shadow-xs" />
+                </div>
+              </div>
+            </button>
           </div>
 
           <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />

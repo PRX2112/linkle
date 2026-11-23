@@ -165,7 +165,7 @@ export default function LandingNavbar({ session }: LandingNavbarProps) {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 top-16 z-50 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md md:hidden flex flex-col justify-between p-6 pb-safe border-t border-gray-200 dark:border-zinc-800 overflow-y-auto"
+          className="fixed inset-0 top-16 z-50 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md md:hidden flex flex-col justify-between p-6 pb-safe border-t border-gray-200 dark:border-zinc-800 overflow-y-auto no-scrollbar"
           role="dialog"
           aria-modal="true"
           aria-label="Mobile Navigation Menu"
